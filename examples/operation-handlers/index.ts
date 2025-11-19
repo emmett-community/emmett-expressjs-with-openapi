@@ -9,7 +9,7 @@ import {
   createOpenApiValidatorOptions,
   getApplication,
   startAPI,
-} from '@event-driven-io/emmett-expressjs';
+} from '@emmett-community/emmett-expressjs-with-openapi';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -130,6 +130,19 @@ const openApiSpec = {
         responses: {
           '200': {
             description: 'Item added successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string' },
+                    cartId: { type: 'string' },
+                    itemCount: { type: 'integer' },
+                  },
+                  required: ['message', 'cartId', 'itemCount'],
+                },
+              },
+            },
           },
           '400': {
             description: 'Bad Request',
@@ -159,7 +172,7 @@ const app = getApplication({
 
     // This is the key configuration for automatic route wiring
     // It points to the directory containing your operation handler modules
-    operationHandlers: path.join(__dirname, 'operationHandlersExample'),
+    operationHandlers: path.join(__dirname),
   }),
 });
 

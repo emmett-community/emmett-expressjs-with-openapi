@@ -1,58 +1,67 @@
 # Emmett Express.js Examples
 
-This directory contains working examples demonstrating various features of `@event-driven-io/emmett-expressjs`.
+This directory contains working examples demonstrating various features of `@emmett-community/emmett-expressjs-with-openapi`.
 
 ## Available Examples
 
 ### 1. Basic OpenAPI Validation
-**Location:** [openapi/basic/](./openapi/basic/)
+
+**Location:** [basic/](./basic/)
 
 Demonstrates basic OpenAPI 3.x validation with express-openapi-validator.
 
 **Features:**
+
 - Request validation against OpenAPI spec
 - Type coercion for query parameters
 - Format validation (UUID, etc.)
 - Error responses as Problem Details (RFC 7807)
 
 **Run:**
+
 ```bash
-cd openapi/basic
+cd examples/basic
 npm install  # Install dependencies (if needed)
 npm start    # Run the example
 ```
 
 ### 2. OpenAPI with Security Handlers
-**Location:** [openapi/with-security/](./openapi/with-security/)
+
+**Location:** [with-security/](./with-security/)
 
 Shows how to implement custom authentication and authorization handlers.
 
 **Features:**
+
 - Bearer token (JWT) authentication
 - API key authentication
 - Custom security validation
 - Scope-based authorization
 
 **Run:**
+
 ```bash
-cd openapi/with-security
+cd examples/with-security
 npm start
 ```
 
 ### 3. Operation Handlers
-**Location:** [openapi/operation-handlers/](./openapi/operation-handlers/)
+
+**Location:** [operation-handlers/](./operation-handlers/)
 
 Demonstrates automatic route-to-handler mapping based on OpenAPI operationId.
 
 **Features:**
+
 - Automatic routing based on `operationId`
 - Reduces boilerplate code
 - Type-safe handler functions
 - Operation-specific handlers
 
 **Run:**
+
 ```bash
-cd openapi/operation-handlers
+cd examples/operation-handlers
 npm start
 ```
 

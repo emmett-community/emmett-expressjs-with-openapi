@@ -10,7 +10,7 @@ import {
   getApplication,
   startAPI,
   type WebApiSetup,
-} from '@event-driven-io/emmett-expressjs';
+} from '@emmett-community/emmett-expressjs-with-openapi';
 import type { Router } from 'express';
 
 // Example OpenAPI 3.0 specification

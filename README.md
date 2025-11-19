@@ -64,11 +64,11 @@ Head to [`docs/openapi-validation.md`](docs/openapi-validation.md) for the full 
 
 ## Examples
 
-Working examples live under `examples/openapi/`:
+Working examples live under `examples/`:
 
-- `examples/openapi/basic` – minimal validation setup with manual routes.
-- `examples/openapi/with-security` – JWT/API-key style security handlers.
-- `examples/openapi/operation-handlers` – automatic routing powered by `operationHandlers`.
+- `examples/basic` – minimal validation setup with manual routes.
+- `examples/with-security` – JWT/API-key style security handlers.
+- `examples/operation-handlers` – automatic routing powered by `operationHandlers`.
 
 ## Tests
 

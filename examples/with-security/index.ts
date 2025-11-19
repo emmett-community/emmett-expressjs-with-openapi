@@ -11,7 +11,7 @@ import {
   startAPI,
   type SecurityHandlers,
   type WebApiSetup,
-} from '@event-driven-io/emmett-expressjs';
+} from '@emmett-community/emmett-expressjs-with-openapi';
 import type { Router } from 'express';
 
 // OpenAPI specification with security schemes
@@ -106,6 +106,18 @@ const openApiSpec = {
         responses: {
           '200': {
             description: 'Admin report data',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    totalCarts: { type: 'integer' },
+                    totalRevenue: { type: 'number' },
+                  },
+                  required: ['totalCarts', 'totalRevenue'],
+                },
+              },
+            },
           },
         },
       },

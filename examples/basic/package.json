@@ -2,14 +2,14 @@
   "name": "emmett-expressjs-example-basic",
   "version": "1.0.0",
   "private": true,
-  "description": "Basic OpenAPI validation example for emmett-expressjs",
+  "description": "Basic OpenAPI validation example for emmett-expressjs-with-openapi",
   "type": "module",
   "scripts": {
     "start": "tsx index.ts",
     "dev": "tsx watch index.ts"
   },
   "dependencies": {
-    "@event-driven-io/emmett-expressjs": "workspace:*",
+    "@emmett-community/emmett-expressjs-with-openapi": "file:../..",
     "express": "^4.21.2",
     "express-openapi-validator": "^5.6.0"
   },
