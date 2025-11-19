@@ -323,7 +323,7 @@ export const openShoppingCart = on(async (request: Request) => {
 });
 ```
 
-See [basic example](../examples/basic/index.ts) and [operation handlers example](../examples/operation-handlers/index.ts) for complete working examples.
+See the [shopping cart example](../examples/shopping-cart/README.md) for a complete end-to-end application. Minimal quick starts live under [basic](../examples/basic/index.ts) and [operation-handlers](../examples/operation-handlers/index.ts).
 
 **Benefits of Operation Handlers:**
 
@@ -488,7 +488,8 @@ startAPI(app, { port: 3000 });
 
 ## Examples
 
-- [Basic example](../examples/basic/index.ts) - Basic OpenAPI validation with manual routes
-- [With security](../examples/with-security/index.ts) - Custom security handlers (JWT, API keys)
-- [Operation handlers](../examples/operation-handlers/index.ts) - Using operation handlers for automatic routing
+- [Shopping cart example](../examples/shopping-cart/README.md) - Realistic Emmett flow with in-memory store/publisher, OpenAPI file, validation, security handlers, and automated tests.
+- [Basic example](../examples/basic/index.ts) - Basic OpenAPI validation with manual routes.
+- [With security](../examples/with-security/index.ts) - Custom security handlers (JWT, API keys).
+- [Operation handlers](../examples/operation-handlers/index.ts) - Using operation handlers for automatic routing.
 - [Integration tests](../test/integration/openapi-validation/api.int.spec.ts) - Integration tests demonstrating various features

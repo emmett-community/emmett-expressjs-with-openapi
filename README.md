@@ -66,9 +66,11 @@ Head to [`docs/openapi-validation.md`](docs/openapi-validation.md) for the full 
 
 Working examples live under `examples/`:
 
-- `examples/basic` – minimal validation setup with manual routes.
-- `examples/with-security` – JWT/API-key style security handlers.
-- `examples/operation-handlers` – automatic routing powered by `operationHandlers`.
+- `examples/shopping-cart` – feature-complete Emmett sample (business logic, memory store/publisher, security handlers, OpenAPI file, unit/int/e2e tests, `.http` scripts).
+- Legacy quick starts:
+  - `examples/basic` – manual routes + validation (minimal scaffolding).
+  - `examples/with-security` – standalone security handler demo.
+  - `examples/operation-handlers` – barebones `operationHandlers` showcase.
 
 ## Tests
 

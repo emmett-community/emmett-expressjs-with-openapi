@@ -1,80 +1,37 @@
 # Emmett Express.js Examples
 
-This directory contains working examples demonstrating various features of `@emmett-community/emmett-expressjs-with-openapi`.
+This directory now centres on a full-featured shopping cart that mirrors the
+official Emmett samples while staying completely in-memory.
 
-## Available Examples
+## Shopping Cart + OpenAPI
 
-### 1. Basic OpenAPI Validation
+**Location:** [shopping-cart/](./shopping-cart/)
 
-**Location:** [basic/](./basic/)
+Showcases:
 
-Demonstrates basic OpenAPI 3.x validation with express-openapi-validator.
-
-**Features:**
-
-- Request validation against OpenAPI spec
-- Type coercion for query parameters
-- Format validation (UUID, etc.)
-- Error responses as Problem Details (RFC 7807)
-
-**Run:**
-
-```bash
-cd examples/basic
-npm install  # Install dependencies (if needed)
-npm start    # Run the example
-```
-
-### 2. OpenAPI with Security Handlers
-
-**Location:** [with-security/](./with-security/)
-
-Shows how to implement custom authentication and authorization handlers.
-
-**Features:**
-
-- Bearer token (JWT) authentication
-- API key authentication
-- Custom security validation
-- Scope-based authorization
+- Domain/business logic (decider + commands/events)
+- In-memory event store & message bus
+- OpenAPI file on disk + validator + operation handlers
+- Custom bearer-token security handler
+- Unit, integration, and end-to-end tests
+- `.http` file for quick manual smoke testing
 
 **Run:**
 
 ```bash
-cd examples/with-security
-npm start
+cd examples/shopping-cart
+npm install
+npm test    # unit + integration + e2e
+npm start   # launches http://localhost:3000
 ```
 
-### 3. Operation Handlers
+## Legacy quick references
 
-**Location:** [operation-handlers/](./operation-handlers/)
+Still useful for small focused demos:
 
-Demonstrates automatic route-to-handler mapping based on OpenAPI operationId.
-
-**Features:**
-
-- Automatic routing based on `operationId`
-- Reduces boilerplate code
-- Type-safe handler functions
-- Operation-specific handlers
-
-**Run:**
-
-```bash
-cd examples/operation-handlers
-npm start
-```
-
-## Testing Examples
-
-All examples can be tested by making HTTP requests to the running servers. Each example prints curl commands you can use for testing.
-
-## Requirements
-
-- Node.js 18+
-- npm or pnpm
-- Express.js 4.x
-- express-openapi-validator (optional, but required for OpenAPI examples)
+- [basic/](./basic/) – bare minimum wiring for validation.
+- [with-security/](./with-security/) – standalone security handler example.
+- [operation-handlers/](./operation-handlers/) – automatic routing showcase.
 
 ## Learn More
 

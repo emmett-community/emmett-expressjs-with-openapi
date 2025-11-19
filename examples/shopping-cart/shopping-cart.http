@@ -1,0 +1,25 @@
+@host = http://localhost:3000
+@clientId = d6bfbc76-86a9-4b6f-b6fd-955045a9d717
+@auth = Bearer token-writer
+
+### Add product item
+POST {{host}}/clients/{{clientId}}/shopping-carts/current/product-items
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "productId": "product-123",
+  "quantity": 2
+}
+
+### Remove product item
+DELETE {{host}}/clients/{{clientId}}/shopping-carts/current/product-items?productId=product-123&quantity=1&unitPrice=100
+Authorization: {{auth}}
+
+### Confirm shopping cart
+POST {{host}}/clients/{{clientId}}/shopping-carts/current/confirm
+Authorization: {{auth}}
+
+### Cancel shopping cart
+DELETE {{host}}/clients/{{clientId}}/shopping-carts/current
+Authorization: {{auth}}
