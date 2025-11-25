@@ -12,7 +12,8 @@ import {
   type EventStore,
   type EventsPublisher,
 } from '@event-driven-io/emmett';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
+import { on, NoContent } from '@emmett-community/emmett-expressjs-with-openapi';
 import {
   addProductItem as addProductItemCommand,
   cancel,
@@ -72,143 +73,98 @@ export const __setDependencies = (
   if (newGetCurrentTime) deps.getCurrentTime = newGetCurrentTime;
 };
 
-const buildProblem = (status: number, message: string) => ({
-  type: 'about:blank',
-  title: status === 403 ? 'Forbidden' : 'Bad Request',
-  status,
-  detail: message,
+// POST /clients/{clientId}/shopping-carts/current/product-items
+export const addProductItem = on(async (request: Request) => {
+  const { eventStore, getUnitPrice, getCurrentTime } = getDeps();
+  const clientId = assertNotEmptyString(request.params.clientId);
+  const shoppingCartId = ShoppingCartId(clientId);
+  const productId = assertNotEmptyString(request.body.productId);
+
+  const command: AddProductItemToShoppingCart = {
+    type: 'AddProductItemToShoppingCart',
+    data: {
+      shoppingCartId,
+      clientId,
+      productItem: {
+        productId,
+        quantity: assertPositiveNumber(request.body.quantity),
+        unitPrice: await getUnitPrice(productId),
+      },
+    },
+    metadata: { clientId, now: getCurrentTime() },
+  };
+
+  await handle(eventStore, shoppingCartId, (state) =>
+    addProductItemCommand(command, state),
+  );
+
+  return NoContent();
 });
 
-// POST /clients/{clientId}/shopping-carts/current/product-items
-export const addProductItem = async (request: Request, response: Response) => {
-  try {
-    const { eventStore, getUnitPrice, getCurrentTime } = getDeps();
-    const clientId = assertNotEmptyString(request.params.clientId);
-    const shoppingCartId = ShoppingCartId(clientId);
-    const productId = assertNotEmptyString(request.body.productId);
-
-    const command: AddProductItemToShoppingCart = {
-      type: 'AddProductItemToShoppingCart',
-      data: {
-        shoppingCartId,
-        clientId,
-        productItem: {
-          productId,
-          quantity: assertPositiveNumber(request.body.quantity),
-          unitPrice: await getUnitPrice(productId),
-        },
-      },
-      metadata: { clientId, now: getCurrentTime() },
-    };
-
-    await handle(eventStore, shoppingCartId, (state) =>
-      addProductItemCommand(command, state),
-    );
-
-    response.status(204).send();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    const status = message.includes('closed') ? 403 : 400;
-
-    response.status(status).json(buildProblem(status, message));
-  }
-};
-
 // DELETE /clients/{clientId}/shopping-carts/current/product-items
-export const removeProductItem = async (
-  request: Request,
-  response: Response,
-) => {
-  try {
-    const { eventStore, getCurrentTime } = getDeps();
-    const clientId = assertNotEmptyString(request.params.clientId);
-    const shoppingCartId = ShoppingCartId(clientId);
+export const removeProductItem = on(async (request: Request) => {
+  const { eventStore, getCurrentTime } = getDeps();
+  const clientId = assertNotEmptyString(request.params.clientId);
+  const shoppingCartId = ShoppingCartId(clientId);
 
-    const command: RemoveProductItemFromShoppingCart = {
-      type: 'RemoveProductItemFromShoppingCart',
-      data: {
-        shoppingCartId,
-        productItem: {
-          productId: assertNotEmptyString(request.query.productId),
-          quantity: assertPositiveNumber(Number(request.query.quantity)),
-          unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
-        },
+  const command: RemoveProductItemFromShoppingCart = {
+    type: 'RemoveProductItemFromShoppingCart',
+    data: {
+      shoppingCartId,
+      productItem: {
+        productId: assertNotEmptyString(request.query.productId),
+        quantity: assertPositiveNumber(Number(request.query.quantity)),
+        unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
       },
-      metadata: { clientId, now: getCurrentTime() },
-    };
+    },
+    metadata: { clientId, now: getCurrentTime() },
+  };
 
-    await handle(eventStore, shoppingCartId, (state) =>
-      removeProductItemCommand(command, state),
-    );
+  await handle(eventStore, shoppingCartId, (state) =>
+    removeProductItemCommand(command, state),
+  );
 
-    response.status(204).send();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    const status =
-      message.includes('closed') || message.includes('Not enough') ? 403 : 400;
-
-    response.status(status).json(buildProblem(status, message));
-  }
-};
+  return NoContent();
+});
 
 // POST /clients/{clientId}/shopping-carts/current/confirm
-export const confirmShoppingCart = async (
-  request: Request,
-  response: Response,
-) => {
-  try {
-    const { eventStore, messageBus, getCurrentTime } = getDeps();
-    const clientId = assertNotEmptyString(request.params.clientId);
-    const shoppingCartId = ShoppingCartId(clientId);
+export const confirmShoppingCart = on(async (request: Request) => {
+  const { eventStore, messageBus, getCurrentTime } = getDeps();
+  const clientId = assertNotEmptyString(request.params.clientId);
+  const shoppingCartId = ShoppingCartId(clientId);
 
-    const command: ConfirmShoppingCart = {
-      type: 'ConfirmShoppingCart',
-      data: { shoppingCartId },
-      metadata: { clientId, now: getCurrentTime() },
-    };
+  const command: ConfirmShoppingCart = {
+    type: 'ConfirmShoppingCart',
+    data: { shoppingCartId },
+    metadata: { clientId, now: getCurrentTime() },
+  };
 
-    const {
-      newEvents: [confirmed, ..._rest],
-    } = await handle(eventStore, shoppingCartId, (state) =>
-      confirm(command, state),
-    );
+  const {
+    newEvents: [confirmed, ..._rest],
+  } = await handle(eventStore, shoppingCartId, (state) =>
+    confirm(command, state),
+  );
 
-    await messageBus.publish(confirmed);
+  await messageBus.publish(confirmed);
 
-    response.status(204).send();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    const status = message.includes('opened') ? 403 : 400;
-
-    response.status(status).json(buildProblem(status, message));
-  }
-};
+  return NoContent();
+});
 
 // DELETE /clients/{clientId}/shopping-carts/current
-export const cancelShoppingCart = async (
-  request: Request,
-  response: Response,
-) => {
-  try {
-    const { eventStore, getCurrentTime } = getDeps();
-    const clientId = assertNotEmptyString(request.params.clientId);
-    const shoppingCartId = ShoppingCartId(clientId);
+export const cancelShoppingCart = on(async (request: Request) => {
+  const { eventStore, getCurrentTime } = getDeps();
+  const clientId = assertNotEmptyString(request.params.clientId);
+  const shoppingCartId = ShoppingCartId(clientId);
 
-    const command: CancelShoppingCart = {
-      type: 'CancelShoppingCart',
-      data: { shoppingCartId },
-      metadata: { clientId, now: getCurrentTime() },
-    };
+  const command: CancelShoppingCart = {
+    type: 'CancelShoppingCart',
+    data: { shoppingCartId },
+    metadata: { clientId, now: getCurrentTime() },
+  };
 
-    await handle(eventStore, shoppingCartId, (state) =>
-      cancel(command, state),
-    );
+  await handle(eventStore, shoppingCartId, (state) =>
+    cancel(command, state),
+  );
 
-    response.status(204).send();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    const status = message.includes('opened') ? 403 : 400;
-
-    response.status(status).json(buildProblem(status, message));
-  }
-};
+  return NoContent();
+});

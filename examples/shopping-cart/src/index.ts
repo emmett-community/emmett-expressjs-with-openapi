@@ -1,11 +1,13 @@
 import {
   getInMemoryEventStore,
   getInMemoryMessageBus,
+  IllegalStateError,
 } from '@event-driven-io/emmett';
 import {
   createOpenApiValidatorOptions,
   getApplication,
   startAPI,
+  type ErrorToProblemDetailsMapping,
   type SecurityHandlers,
 } from '@emmett-community/emmett-expressjs-with-openapi';
 import type { Application } from 'express';
@@ -60,8 +62,39 @@ const securityHandlers: SecurityHandlers = {
 
 const openApiFilePath = path.join(__dirname, '../openapi.yml');
 
+const mapErrorToProblemDetails: ErrorToProblemDetailsMapping = (error) => {
+  if (!(error instanceof IllegalStateError)) {
+    return undefined; // Use default error handling
+  }
+
+  const message = error.message;
+
+  // Shopping cart closed or insufficient quantity errors = 403 Forbidden
+  if (
+    message.includes('closed') ||
+    message.includes('opened') ||
+    message.includes('Not enough')
+  ) {
+    return {
+      status: 403,
+      title: 'Forbidden',
+      detail: message,
+      type: 'about:blank',
+    } as any;
+  }
+
+  // Other IllegalStateError cases = 400 Bad Request
+  return {
+    status: 400,
+    title: 'Bad Request',
+    detail: message,
+    type: 'about:blank',
+  } as any;
+};
+
 export const app: Application = getApplication({
   apis: [],
+  mapError: mapErrorToProblemDetails,
   openApiValidator: createOpenApiValidatorOptions(openApiFilePath, {
     validateRequests: true,
     validateResponses: process.env.NODE_ENV !== 'production',

@@ -18,5 +18,6 @@ export default defineConfig([
     entry: ['src/index.ts'],
     sourcemap: true,
     tsconfig: 'tsconfig.build.json', // workaround for https://github.com/egoist/tsup/issues/571#issuecomment-1760052931
+    shims: true, // Add shims for import.meta and __dirname/__filename
   },
 ]);
