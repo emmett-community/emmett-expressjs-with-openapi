@@ -13,8 +13,8 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { before, beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { __setDependencies } from '../handlers/shoppingCarts';
-import type { ProductItem } from './shoppingCart';
+import { __setDependencies } from '../src/handlers/shoppingCarts';
+import type { ProductItem } from '../src/shoppingCarts/shoppingCart';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,12 +38,12 @@ void describe('ShoppingCart e2e (OpenAPI)', () => {
         getApplication({
           apis: [],
           openApiValidator: createOpenApiValidatorOptions(
-            path.join(__dirname, '../../openapi.yml'),
+            path.join(__dirname, '../openapi.yml'),
             {
               validateRequests: true,
               validateSecurity: true,
               validateResponses: false,
-              operationHandlers: path.join(__dirname, '../handlers'),
+              operationHandlers: path.join(__dirname, '../src/handlers'),
             },
           ),
         }),

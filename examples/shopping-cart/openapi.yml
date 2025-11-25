@@ -43,6 +43,10 @@ paths:
           $ref: '#/components/responses/ValidationProblem'
         '403':
           description: Shopping cart closed or invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
         '401':
           description: Missing or invalid token
 
@@ -80,6 +84,10 @@ paths:
           $ref: '#/components/responses/ValidationProblem'
         '403':
           description: Not enough items to remove
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
         '401':
           description: Missing or invalid token
 
@@ -100,6 +108,10 @@ paths:
           $ref: '#/components/responses/ValidationProblem'
         '403':
           description: Shopping cart empty or closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
         '401':
           description: Missing or invalid token
 
@@ -120,6 +132,10 @@ paths:
           $ref: '#/components/responses/ValidationProblem'
         '403':
           description: Shopping cart not open
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
         '401':
           description: Missing or invalid token
 
