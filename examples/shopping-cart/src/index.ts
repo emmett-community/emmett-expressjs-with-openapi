@@ -8,12 +8,13 @@ import {
   getApplication,
   startAPI,
   type ErrorToProblemDetailsMapping,
+  type ImportedHandlerModules,
   type SecurityHandlers,
 } from '@emmett-community/emmett-expressjs-with-openapi';
 import type { Application } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { __setDependencies } from './handlers/shoppingCarts';
+import { ShoppingCartError } from './shoppingCarts/businessLogic';
 import type { ShoppingCartConfirmed } from './shoppingCarts/shoppingCart';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,8 +24,6 @@ const eventStore = getInMemoryEventStore();
 const messageBus = getInMemoryMessageBus();
 const getUnitPrice = (_productId: string) => Promise.resolve(100);
 const getCurrentTime = () => new Date();
-
-__setDependencies(eventStore, messageBus, getUnitPrice, getCurrentTime);
 
 messageBus.subscribe((event: ShoppingCartConfirmed) => {
   if (event.type === 'ShoppingCartConfirmed') {
@@ -62,47 +61,49 @@ const securityHandlers: SecurityHandlers = {
 
 const openApiFilePath = path.join(__dirname, '../openapi.yml');
 
+const errorStatusMap: Record<string, number> = {
+  [ShoppingCartError.CART_CLOSED]: 403,
+  [ShoppingCartError.CART_NOT_OPENED]: 403,
+  [ShoppingCartError.INSUFFICIENT_QUANTITY]: 403,
+  [ShoppingCartError.CART_ALREADY_EXISTS]: 409,
+  [ShoppingCartError.CART_EMPTY]: 400,
+};
+
 const mapErrorToProblemDetails: ErrorToProblemDetailsMapping = (error) => {
   if (!(error instanceof IllegalStateError)) {
     return undefined; // Use default error handling
   }
 
-  const message = error.message;
+  const statusCode = errorStatusMap[error.message] ?? 500;
 
-  // Shopping cart closed or insufficient quantity errors = 403 Forbidden
-  if (
-    message.includes('closed') ||
-    message.includes('opened') ||
-    message.includes('Not enough')
-  ) {
-    return {
-      status: 403,
-      title: 'Forbidden',
-      detail: message,
-      type: 'about:blank',
-    } as any;
-  }
-
-  // Other IllegalStateError cases = 400 Bad Request
   return {
-    status: 400,
-    title: 'Bad Request',
-    detail: message,
+    status: statusCode,
+    title:
+      statusCode === 403
+        ? 'Forbidden'
+        : statusCode === 409
+          ? 'Conflict'
+          : 'Bad Request',
+    detail: error.message,
     type: 'about:blank',
   } as any;
 };
 
-export const app: Application = getApplication({
-  apis: [],
+export const app: Application = await getApplication({
   mapError: mapErrorToProblemDetails,
   openApiValidator: createOpenApiValidatorOptions(openApiFilePath, {
-    validateRequests: true,
-    validateResponses: process.env.NODE_ENV !== 'production',
-    validateFormats: 'fast',
-    serveSpec: '/api-docs/openapi.yml',
-    validateSecurity: { handlers: securityHandlers },
-    operationHandlers: path.join(__dirname, './handlers'),
-  }),
+      validateRequests: true,
+      validateResponses: process.env.NODE_ENV !== 'production',
+      validateFormats: 'fast',
+      serveSpec: '/api-docs/openapi.yml',
+      validateSecurity: { handlers: securityHandlers },
+      operationHandlers: path.join(__dirname, './handlers'),
+      initializeHandlers: async (handlers?: ImportedHandlerModules) => {
+        // Framework auto-imports handler modules!
+        handlers!.shoppingCarts.initializeHandlers(eventStore, messageBus, getUnitPrice, getCurrentTime);
+      },
+    },
+  ),
 });
 
 if (import.meta.url === `file://${process.argv[1]}`) {

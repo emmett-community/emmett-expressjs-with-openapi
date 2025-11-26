@@ -5,6 +5,12 @@
 export type OpenAPIV3Document = any;
 
 /**
+ * Imported handler modules, keyed by module name.
+ * Automatically populated by the framework when operationHandlers is configured.
+ */
+export type ImportedHandlerModules = Record<string, any>;
+
+/**
  * Security handlers for custom authentication/authorization logic.
  * Maps security scheme names to handler functions.
  *
@@ -179,6 +185,37 @@ export type OpenApiValidatorOptions = {
           files?: number;
         };
       };
+
+  /**
+   * Optional callback to initialize operation handlers with dependencies.
+   * Called before the OpenAPI validator middleware is configured.
+   *
+   * The framework automatically imports handler modules referenced in your
+   * OpenAPI spec (via x-eov-operation-handler) and passes them as the first parameter.
+   *
+   * @param handlers - Auto-imported handler modules, keyed by module name
+   * @returns void or a Promise that resolves when initialization is complete
+   *
+   * @example
+   * ```typescript
+   * // With automatic import (recommended)
+   * initializeHandlers: async (handlers) => {
+   *   handlers.shoppingCarts.initializeHandlers(eventStore, messageBus, getUnitPrice, getCurrentTime);
+   * }
+   *
+   * // Manual import (still supported for backward compatibility)
+   * import * as handlersModule from './handlers/shoppingCarts';
+   * import { registerHandlerModule } from '@emmett-community/emmett-expressjs-with-openapi';
+   * initializeHandlers: () => {
+   *   const handlersPath = path.join(__dirname, './handlers/shoppingCarts');
+   *   registerHandlerModule(handlersPath, handlersModule);
+   *   handlersModule.initializeHandlers(eventStore, messageBus, getUnitPrice, getCurrentTime);
+   * }
+   * ```
+   */
+  initializeHandlers?: (
+    handlers?: ImportedHandlerModules,
+  ) => void | Promise<void>;
 };
 
 /**
@@ -215,6 +252,29 @@ export type OpenApiValidatorOptions = {
  *   serveSpec: '/api-docs/openapi.json'
  * });
  *
+ * // With dependency injection for operation handlers
+ * type ShoppingCartDeps = {
+ *   eventStore: EventStore;
+ *   messageBus: EventsPublisher;
+ *   getUnitPrice: (productId: string) => Promise<number>;
+ *   getCurrentTime: () => Date;
+ * };
+ *
+ * const validatorOptions = createOpenApiValidatorOptions<ShoppingCartDeps>(
+ *   './openapi.yaml',
+ *   {
+ *     operationHandlers: './handlers',
+ *     initializeHandlers: (deps) => {
+ *       initializeHandlers(
+ *         deps.eventStore,
+ *         deps.messageBus,
+ *         deps.getUnitPrice,
+ *         deps.getCurrentTime
+ *       );
+ *     }
+ *   }
+ * );
+ *
  * const app = getApplication({
  *   apis: [myApi],
  *   openApiValidator: validatorOptions
@@ -237,6 +297,7 @@ export const createOpenApiValidatorOptions = (
     $refParser: options?.$refParser,
     serveSpec: options?.serveSpec ?? false,
     fileUploader: options?.fileUploader,
+    initializeHandlers: options?.initializeHandlers,
   };
 };
 

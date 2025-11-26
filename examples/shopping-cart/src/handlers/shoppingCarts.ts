@@ -7,94 +7,97 @@ import {
   CommandHandler,
   assertNotEmptyString,
   assertPositiveNumber,
-  getInMemoryEventStore,
-  getInMemoryMessageBus,
   type EventStore,
   type EventsPublisher,
 } from '@event-driven-io/emmett';
+import { NoContent, on } from '@emmett-community/emmett-expressjs-with-openapi';
 import type { Request } from 'express';
-import { on, NoContent } from '@emmett-community/emmett-expressjs-with-openapi';
 import {
   addProductItem as addProductItemCommand,
   cancel,
   confirm,
+  createAddProductItemCommand,
+  createCancelShoppingCartCommand,
+  createConfirmShoppingCartCommand,
+  createRemoveProductItemCommand,
   removeProductItem as removeProductItemCommand,
-  type AddProductItemToShoppingCart,
-  type CancelShoppingCart,
-  type ConfirmShoppingCart,
-  type RemoveProductItemFromShoppingCart,
 } from '../shoppingCarts/businessLogic';
-import {
-  ShoppingCartId,
-  evolve,
-  initialState,
-} from '../shoppingCarts/shoppingCart';
+import { evolve, initialState } from '../shoppingCarts/shoppingCart';
 
-export const handle = CommandHandler({ evolve, initialState });
+const handle = CommandHandler({ evolve, initialState });
 
-type ShoppingCartDependencies = {
-  eventStore: EventStore;
-  messageBus: EventsPublisher;
-  getUnitPrice: (_productId: string) => Promise<number>;
-  getCurrentTime: () => Date;
-};
+/////////////////////////////////////////
+////////// Module-level Dependencies (private)
+/////////////////////////////////////////
 
-const depsKey = Symbol.for(
-  'emmett.examples.shoppingCart.dependencies',
-);
+let eventStore: EventStore;
+let messageBus: EventsPublisher;
+let getUnitPrice: (_productId: string) => Promise<number>;
+let getCurrentTime: () => Date;
 
-const getDeps = (): ShoppingCartDependencies => {
-  const globalTarget = globalThis as typeof globalThis & {
-    [depsKey]?: ShoppingCartDependencies;
-  };
+/////////////////////////////////////////
+////////// Initialization Function
+/////////////////////////////////////////
 
-  if (!globalTarget[depsKey]) {
-    globalTarget[depsKey] = {
-      eventStore: getInMemoryEventStore(),
-      messageBus: getInMemoryMessageBus(),
-      getUnitPrice: (_productId: string) => Promise.resolve(100),
-      getCurrentTime: () => new Date(),
-    };
-  }
-
-  return globalTarget[depsKey]!;
-};
-
-export const __setDependencies = (
-  newEventStore: EventStore,
-  newMessageBus?: EventsPublisher,
-  newGetUnitPrice?: (_productId: string) => Promise<number>,
-  newGetCurrentTime?: () => Date,
+export const initializeHandlers = (
+  store: EventStore,
+  bus: EventsPublisher,
+  priceGetter: (_productId: string) => Promise<number>,
+  timeGetter: () => Date,
 ) => {
-  const deps = getDeps();
-  deps.eventStore = newEventStore;
-  if (newMessageBus) deps.messageBus = newMessageBus;
-  if (newGetUnitPrice) deps.getUnitPrice = newGetUnitPrice;
-  if (newGetCurrentTime) deps.getCurrentTime = newGetCurrentTime;
+  eventStore = store;
+  messageBus = bus;
+  getUnitPrice = priceGetter;
+  getCurrentTime = timeGetter;
 };
+
+/////////////////////////////////////////
+////////// Request Types
+/////////////////////////////////////////
+
+type AddProductItemRequest = Request<
+  Partial<{ clientId: string }>,
+  unknown,
+  Partial<{ productId: string; quantity: number }>
+>;
+
+type RemoveProductItemRequest = Request<
+  Partial<{ clientId: string }>,
+  unknown,
+  unknown,
+  Partial<{ productId: string; quantity: string; unitPrice: string }>
+>;
+
+type ConfirmShoppingCartRequest = Request<
+  Partial<{ clientId: string }>,
+  unknown,
+  unknown
+>;
+
+type CancelShoppingCartRequest = Request<
+  Partial<{ clientId: string }>,
+  unknown,
+  unknown
+>;
+
+/////////////////////////////////////////
+////////// Operation Handlers (exports for express-openapi-validator)
+/////////////////////////////////////////
 
 // POST /clients/{clientId}/shopping-carts/current/product-items
-export const addProductItem = on(async (request: Request) => {
-  const { eventStore, getUnitPrice, getCurrentTime } = getDeps();
+export const addProductItem = on(async (request: AddProductItemRequest) => {
   const clientId = assertNotEmptyString(request.params.clientId);
-  const shoppingCartId = ShoppingCartId(clientId);
   const productId = assertNotEmptyString(request.body.productId);
+  const quantity = assertPositiveNumber(request.body.quantity);
+  const unitPrice = await getUnitPrice(productId);
 
-  const command: AddProductItemToShoppingCart = {
-    type: 'AddProductItemToShoppingCart',
-    data: {
-      shoppingCartId,
-      clientId,
-      productItem: {
-        productId,
-        quantity: assertPositiveNumber(request.body.quantity),
-        unitPrice: await getUnitPrice(productId),
-      },
-    },
-    metadata: { clientId, now: getCurrentTime() },
-  };
+  const command = createAddProductItemCommand(
+    clientId,
+    { productId, quantity, unitPrice },
+    getCurrentTime(),
+  );
 
-  await handle(eventStore, shoppingCartId, (state) =>
+  await handle(eventStore, command.data.shoppingCartId, (state) =>
     addProductItemCommand(command, state),
   );
 
@@ -102,69 +105,57 @@ export const addProductItem = on(async (request: Request) => {
 });
 
 // DELETE /clients/{clientId}/shopping-carts/current/product-items
-export const removeProductItem = on(async (request: Request) => {
-  const { eventStore, getCurrentTime } = getDeps();
-  const clientId = assertNotEmptyString(request.params.clientId);
-  const shoppingCartId = ShoppingCartId(clientId);
+export const removeProductItem = on(
+  async (request: RemoveProductItemRequest) => {
+    const clientId = assertNotEmptyString(request.params.clientId);
+    const productId = assertNotEmptyString(request.query.productId);
+    const quantity = assertPositiveNumber(Number(request.query.quantity));
+    const unitPrice = assertPositiveNumber(Number(request.query.unitPrice));
 
-  const command: RemoveProductItemFromShoppingCart = {
-    type: 'RemoveProductItemFromShoppingCart',
-    data: {
-      shoppingCartId,
-      productItem: {
-        productId: assertNotEmptyString(request.query.productId),
-        quantity: assertPositiveNumber(Number(request.query.quantity)),
-        unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
-      },
-    },
-    metadata: { clientId, now: getCurrentTime() },
-  };
+    const command = createRemoveProductItemCommand(
+      clientId,
+      { productId, quantity, unitPrice },
+      getCurrentTime(),
+    );
 
-  await handle(eventStore, shoppingCartId, (state) =>
-    removeProductItemCommand(command, state),
-  );
+    await handle(eventStore, command.data.shoppingCartId, (state) =>
+      removeProductItemCommand(command, state),
+    );
 
-  return NoContent();
-});
+    return NoContent();
+  },
+);
 
 // POST /clients/{clientId}/shopping-carts/current/confirm
-export const confirmShoppingCart = on(async (request: Request) => {
-  const { eventStore, messageBus, getCurrentTime } = getDeps();
-  const clientId = assertNotEmptyString(request.params.clientId);
-  const shoppingCartId = ShoppingCartId(clientId);
+export const confirmShoppingCart = on(
+  async (request: ConfirmShoppingCartRequest) => {
+    const clientId = assertNotEmptyString(request.params.clientId);
 
-  const command: ConfirmShoppingCart = {
-    type: 'ConfirmShoppingCart',
-    data: { shoppingCartId },
-    metadata: { clientId, now: getCurrentTime() },
-  };
+    const command = createConfirmShoppingCartCommand(clientId, getCurrentTime());
 
-  const {
-    newEvents: [confirmed, ..._rest],
-  } = await handle(eventStore, shoppingCartId, (state) =>
-    confirm(command, state),
-  );
+    const {
+      newEvents: [confirmed, ..._rest],
+    } = await handle(eventStore, command.data.shoppingCartId, (state) =>
+      confirm(command, state),
+    );
 
-  await messageBus.publish(confirmed);
+    await messageBus.publish(confirmed);
 
-  return NoContent();
-});
+    return NoContent();
+  },
+);
 
 // DELETE /clients/{clientId}/shopping-carts/current
-export const cancelShoppingCart = on(async (request: Request) => {
-  const { eventStore, getCurrentTime } = getDeps();
-  const clientId = assertNotEmptyString(request.params.clientId);
-  const shoppingCartId = ShoppingCartId(clientId);
+export const cancelShoppingCart = on(
+  async (request: CancelShoppingCartRequest) => {
+    const clientId = assertNotEmptyString(request.params.clientId);
 
-  const command: CancelShoppingCart = {
-    type: 'CancelShoppingCart',
-    data: { shoppingCartId },
-    metadata: { clientId, now: getCurrentTime() },
-  };
+    const command = createCancelShoppingCartCommand(clientId, getCurrentTime());
 
-  await handle(eventStore, shoppingCartId, (state) =>
-    cancel(command, state),
-  );
+    await handle(eventStore, command.data.shoppingCartId, (state) =>
+      cancel(command, state),
+    );
 
-  return NoContent();
-});
+    return NoContent();
+  },
+);

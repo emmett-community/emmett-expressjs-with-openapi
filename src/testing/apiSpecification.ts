@@ -90,16 +90,17 @@ export const ApiSpecification = {
     Store extends EventStore<import('@event-driven-io/emmett').ReadEventMetadataWithGlobalPosition> = EventStore<import('@event-driven-io/emmett').ReadEventMetadataWithGlobalPosition>
   >(
     getEventStore: () => Store,
-    getApplication: (eventStore: Store) => Application,
+    getApplication: (eventStore: Store) => Application | Promise<Application>,
   ): ApiSpecification<EventType> => {
     {
       return (...givenStreams: TestEventStream<EventType>[]) => {
         const eventStore = WrapEventStore(getEventStore());
-        const application = getApplication(eventStore);
 
         return {
           when: (setupRequest: TestRequest) => {
             const handle = async () => {
+              const application = await Promise.resolve(getApplication(eventStore));
+
               for (const [streamName, events] of givenStreams) {
                 await eventStore.setup(streamName, events);
               }

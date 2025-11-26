@@ -9,6 +9,7 @@ import {
 import {
   evolve,
   initialState,
+  ShoppingCartId,
   type PricedProductItem,
   type ProductItemAddedToShoppingCart,
   type ProductItemRemovedFromShoppingCart,
@@ -17,6 +18,18 @@ import {
   type ShoppingCartConfirmed,
   type ShoppingCartEvent,
 } from './shoppingCart';
+
+/////////////////////////////////////////
+////////// Error Codes
+/////////////////////////////////////////
+
+export enum ShoppingCartError {
+  CART_ALREADY_EXISTS = 'CART_ALREADY_EXISTS',
+  CART_CLOSED = 'CART_CLOSED',
+  CART_NOT_OPENED = 'CART_NOT_OPENED',
+  CART_EMPTY = 'CART_EMPTY',
+  INSUFFICIENT_QUANTITY = 'INSUFFICIENT_QUANTITY',
+}
 
 /////////////////////////////////////////
 ////////// Commands
@@ -68,6 +81,59 @@ export type ShoppingCartCommand =
   | CancelShoppingCart;
 
 /////////////////////////////////////////
+////////// Command Factories
+/////////////////////////////////////////
+
+export const createAddProductItemCommand = (
+  clientId: string,
+  productItem: PricedProductItem,
+  now: Date,
+): AddProductItemToShoppingCart => ({
+  type: 'AddProductItemToShoppingCart',
+  data: {
+    shoppingCartId: ShoppingCartId(clientId),
+    clientId,
+    productItem,
+  },
+  metadata: { clientId, now },
+});
+
+export const createRemoveProductItemCommand = (
+  clientId: string,
+  productItem: PricedProductItem,
+  now: Date,
+): RemoveProductItemFromShoppingCart => ({
+  type: 'RemoveProductItemFromShoppingCart',
+  data: {
+    shoppingCartId: ShoppingCartId(clientId),
+    productItem,
+  },
+  metadata: { clientId, now },
+});
+
+export const createConfirmShoppingCartCommand = (
+  clientId: string,
+  now: Date,
+): ConfirmShoppingCart => ({
+  type: 'ConfirmShoppingCart',
+  data: {
+    shoppingCartId: ShoppingCartId(clientId),
+  },
+  metadata: { clientId, now },
+});
+
+export const createCancelShoppingCartCommand = (
+  clientId: string,
+  now: Date,
+): CancelShoppingCart => ({
+  type: 'CancelShoppingCart',
+  data: {
+    shoppingCartId: ShoppingCartId(clientId),
+  },
+  metadata: { clientId, now },
+});
+
+/////////////////////////////////////////
 ////////// Business Logic
 /////////////////////////////////////////
 
@@ -76,7 +142,7 @@ export const addProductItem = (
   state: ShoppingCart,
 ): ProductItemAddedToShoppingCart => {
   if (state.status === 'Closed')
-    throw new IllegalStateError('Shopping Cart already closed');
+    throw new IllegalStateError(ShoppingCartError.CART_CLOSED);
 
   const {
     data: { shoppingCartId, clientId, productItem },
@@ -100,7 +166,7 @@ export const removeProductItem = (
   state: ShoppingCart,
 ): ProductItemRemovedFromShoppingCart => {
   if (state.status !== 'Opened')
-    throw new IllegalStateError('Shopping Cart is not opened');
+    throw new IllegalStateError(ShoppingCartError.CART_NOT_OPENED);
 
   const {
     data: { shoppingCartId, productItem },
@@ -110,7 +176,7 @@ export const removeProductItem = (
   const currentQuantity = state.productItems.get(productItem.productId) ?? 0;
 
   if (currentQuantity < productItem.quantity)
-    throw new IllegalStateError('Not enough products');
+    throw new IllegalStateError(ShoppingCartError.INSUFFICIENT_QUANTITY);
 
   return {
     type: 'ProductItemRemovedFromShoppingCart',
@@ -128,12 +194,12 @@ export const confirm = (
   state: ShoppingCart,
 ): ShoppingCartConfirmed => {
   if (state.status !== 'Opened')
-    throw new IllegalStateError('Shopping Cart is not opened');
+    throw new IllegalStateError(ShoppingCartError.CART_NOT_OPENED);
 
   const totalQuantityOfAllProductItems = sum(state.productItems.values());
 
   if (totalQuantityOfAllProductItems <= 0)
-    throw new IllegalStateError('Shopping Cart is empty');
+    throw new IllegalStateError(ShoppingCartError.CART_EMPTY);
 
   const {
     data: { shoppingCartId },
@@ -155,7 +221,7 @@ export const cancel = (
   state: ShoppingCart,
 ): ShoppingCartCancelled => {
   if (state.status !== 'Opened')
-    throw new IllegalStateError('Shopping Cart is not opened');
+    throw new IllegalStateError(ShoppingCartError.CART_NOT_OPENED);
 
   const {
     data: { shoppingCartId },

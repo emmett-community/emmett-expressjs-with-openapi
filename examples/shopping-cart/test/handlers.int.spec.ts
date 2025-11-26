@@ -10,12 +10,12 @@ import {
   expectNewEvents,
   expectResponse,
   getApplication,
+  type ImportedHandlerModules,
 } from '@emmett-community/emmett-expressjs-with-openapi';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { __setDependencies } from '../src/handlers/shoppingCarts';
 import {
   type PricedProductItem,
   type ShoppingCartEvent,
@@ -222,7 +222,7 @@ void describe('ShoppingCart integration (OpenAPI)', () => {
         )
         .then(
           expectError(403, {
-            detail: 'Shopping Cart already closed',
+            detail: 'CART_CLOSED',
             status: 403,
             title: 'Forbidden',
             type: 'about:blank',
@@ -234,10 +234,7 @@ void describe('ShoppingCart integration (OpenAPI)', () => {
   const given = ApiSpecification.for<ShoppingCartEvent>(
     () => getInMemoryEventStore(),
     (eventStore) => {
-      __setDependencies(eventStore, messageBus, getUnitPrice, () => now);
-
       return getApplication({
-        apis: [],
         openApiValidator: createOpenApiValidatorOptions(
           path.join(__dirname, '../openapi.yml'),
           {
@@ -245,6 +242,10 @@ void describe('ShoppingCart integration (OpenAPI)', () => {
             validateSecurity: true,
             validateResponses: false,
             operationHandlers: path.join(__dirname, '../src/handlers'),
+            initializeHandlers: async (handlers?: ImportedHandlerModules) => {
+              // Framework auto-imports handler modules!
+              handlers!.shoppingCarts.initializeHandlers(eventStore, messageBus, getUnitPrice, () => now);
+            },
           },
         ),
       });

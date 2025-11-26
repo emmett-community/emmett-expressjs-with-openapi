@@ -15,7 +15,7 @@ export type WebApiSetup = (router: Router) => void;
 // #endregion web-api-setup
 
 export type ApplicationOptions = {
-  apis: WebApiSetup[];
+  apis?: WebApiSetup[];
   mapError?: ErrorToProblemDetailsMapping;
   enableDefaultExpressEtag?: boolean;
   disableJsonMiddleware?: boolean;
@@ -31,10 +31,18 @@ export type ApplicationOptions = {
    * ```typescript
    * import { getApplication, createOpenApiValidatorOptions } from '@event-driven-io/emmett-expressjs';
    *
-   * const app = getApplication({
-   *   apis: [myApi],
-   *   openApiValidator: createOpenApiValidatorOptions('./openapi.yaml', {
-   *     validateResponses: true
+   * type AppDeps = {
+   *   eventStore: EventStore;
+   *   messageBus: EventsPublisher;
+   * };
+   *
+   * const app = await getApplication({
+   *   openApiValidator: createOpenApiValidatorOptions<AppDeps>('./openapi.yaml', {
+   *     validateResponses: true,
+   *     operationHandlers: './handlers',
+   *     initializeHandlers: (deps) => {
+   *       initializeHandlers(deps.eventStore, deps.messageBus);
+   *     }
    *   })
    * });
    * ```
@@ -42,7 +50,7 @@ export type ApplicationOptions = {
   openApiValidator?: OpenApiValidatorOptions;
 };
 
-export const getApplication = (options: ApplicationOptions) => {
+export const getApplication = async (options: ApplicationOptions) => {
   const app: Application = express();
 
   const {
@@ -74,6 +82,55 @@ export const getApplication = (options: ApplicationOptions) => {
 
   // add OpenAPI validator middleware if configured
   if (openApiValidator) {
+    // Activate ESM resolver if operationHandlers are configured
+    // This ensures handler modules are loaded via ESM import() instead of CJS require(),
+    // preventing dual module loading issues when using TypeScript runtimes (tsx, ts-node)
+    if (openApiValidator.operationHandlers) {
+      const { activateESMResolver } = await import(
+        './internal/esm-resolver.js'
+      );
+      activateESMResolver();
+
+      // NEW: Auto-discover and import handler modules from OpenAPI spec
+      const handlersBasePath =
+        typeof openApiValidator.operationHandlers === 'string'
+          ? openApiValidator.operationHandlers
+          : openApiValidator.operationHandlers.basePath;
+
+      if (handlersBasePath) {
+        const { extractHandlerModules } = await import(
+          './internal/openapi-parser.js'
+        );
+        const { importAndRegisterHandlers } = await import(
+          './internal/handler-importer.js'
+        );
+
+        try {
+          // Parse OpenAPI spec to find handler modules
+          const modules = await extractHandlerModules(
+            openApiValidator.apiSpec,
+            handlersBasePath,
+          );
+
+          // Dynamically import and register all handler modules
+          const importedHandlers = await importAndRegisterHandlers(modules);
+
+          // Call user's initializeHandlers callback with imported modules
+          if (openApiValidator.initializeHandlers) {
+            await openApiValidator.initializeHandlers(importedHandlers);
+          }
+        } catch (error) {
+          console.error('Failed to auto-import handler modules:', error);
+          throw error;
+        }
+      }
+    } else {
+      // No operationHandlers, just call initializeHandlers if provided
+      if (openApiValidator.initializeHandlers) {
+        await openApiValidator.initializeHandlers();
+      }
+    }
+
     try {
       const require = createRequire(import.meta.url);
       // express-openapi-validator exports a default with .middleware (ESM/CJS compatibility)
@@ -125,10 +182,13 @@ export const getApplication = (options: ApplicationOptions) => {
     }
   }
 
-  for (const api of apis) {
-    api(router);
+  // Register API routes if provided
+  if (apis) {
+    for (const api of apis) {
+      api(router);
+    }
+    app.use(router);
   }
-  app.use(router);
 
   // add problem details middleware
   if (!disableProblemDetailsMiddleware)

@@ -7,13 +7,13 @@ import {
   createOpenApiValidatorOptions,
   expectResponse,
   getApplication,
+  type ImportedHandlerModules,
   type TestRequest,
 } from '@emmett-community/emmett-expressjs-with-openapi';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { before, beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { __setDependencies } from '../src/handlers/shoppingCarts';
 import type { ProductItem } from '../src/shoppingCarts/shoppingCart';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,13 +30,10 @@ void describe('ShoppingCart e2e (OpenAPI)', () => {
     const getUnitPrice = (_productId: string) => Promise.resolve(100);
     const getCurrentTime = () => new Date();
 
-    __setDependencies(eventStore, messageBus, getUnitPrice, getCurrentTime);
-
     given = ApiE2ESpecification.for(
       () => eventStore,
       () =>
         getApplication({
-          apis: [],
           openApiValidator: createOpenApiValidatorOptions(
             path.join(__dirname, '../openapi.yml'),
             {
@@ -44,6 +41,10 @@ void describe('ShoppingCart e2e (OpenAPI)', () => {
               validateSecurity: true,
               validateResponses: false,
               operationHandlers: path.join(__dirname, '../src/handlers'),
+              initializeHandlers: async (handlers?: ImportedHandlerModules) => {
+                // Framework auto-imports handler modules!
+                handlers!.shoppingCarts.initializeHandlers(eventStore, messageBus, getUnitPrice, getCurrentTime);
+              },
             },
           ),
         }),

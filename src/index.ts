@@ -6,3 +6,4 @@ export * from './handler';
 export * from './openapi';
 export * from './responses';
 export * from './testing';
+export { registerHandlerModule } from './internal/esm-resolver';

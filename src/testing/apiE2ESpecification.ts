@@ -18,16 +18,17 @@ export type ApiE2ESpecification = (...givenRequests: TestRequest[]) => {
 export const ApiE2ESpecification = {
   for: <Store extends EventStore = EventStore>(
     getEventStore: () => Store,
-    getApplication: (eventStore: Store) => Application,
+    getApplication: (eventStore: Store) => Application | Promise<Application>,
   ): ApiE2ESpecification => {
     {
       return (...givenRequests: TestRequest[]) => {
         const eventStore = getEventStore();
-        const application = getApplication(eventStore);
 
         return {
           when: (setupRequest: TestRequest) => {
             const handle = async () => {
+              const application = await Promise.resolve(getApplication(eventStore));
+
               for (const requestFn of givenRequests) {
                 await requestFn(supertest(application));
               }

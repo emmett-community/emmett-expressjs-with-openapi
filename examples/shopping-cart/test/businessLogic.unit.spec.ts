@@ -1,7 +1,7 @@
 import { DeciderSpecification } from '@event-driven-io/emmett';
 import { randomUUID } from 'node:crypto';
 import { describe, it } from 'node:test';
-import { decide } from '../src/shoppingCarts/businessLogic';
+import { decide, ShoppingCartError } from '../src/shoppingCarts/businessLogic';
 import {
   evolve,
   initialState,
@@ -103,7 +103,7 @@ void describe('ShoppingCart business logic', () => {
           metadata: { clientId, now },
         })
         .thenThrows(
-          (error: Error) => error.message === 'Shopping Cart already closed',
+          (error: Error) => error.message === ShoppingCartError.CART_CLOSED,
         );
     });
   });
