@@ -5,9 +5,9 @@ import {
   ApiE2ESpecification,
   expectResponse,
   type TestRequest,
-} from '../../../src';
-import { getApplication } from '../../../src';
-import { shoppingCartApi } from '../../fixtures/shopping-cart/api/router';
+} from '../../src';
+import { getApplication } from '../../src';
+import { shoppingCartApi } from '../fixtures/shopping-cart/api/router';
 
 void describe('Basic Router - E2E Tests', () => {
   let given: ApiE2ESpecification;

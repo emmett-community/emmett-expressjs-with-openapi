@@ -8,10 +8,10 @@ import {
   expectNewEvents,
   expectResponse,
   getApplication,
-} from '../../../src';
-import { shoppingCartApi } from '../../fixtures/shopping-cart/api/router';
-import { ShoppingCartErrors } from '../../fixtures/shopping-cart/businessLogic';
-import type { ShoppingCartEvent } from '../../fixtures/shopping-cart/shoppingCart';
+} from '../../src';
+import { shoppingCartApi } from '../fixtures/shopping-cart/api/router';
+import { ShoppingCartErrors } from '../fixtures/shopping-cart/businessLogic';
+import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
 
 void describe('Basic Router - Integration Tests', () => {
   const given = ApiSpecification.for<ShoppingCartEvent>(

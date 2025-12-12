@@ -492,4 +492,4 @@ startAPI(app, { port: 3000 });
 - [Basic example](../examples/basic/index.ts) - Basic OpenAPI validation with manual routes.
 - [With security](../examples/with-security/index.ts) - Custom security handlers (JWT, API keys).
 - [Operation handlers](../examples/operation-handlers/index.ts) - Using operation handlers for automatic routing.
-- [Integration tests](../test/integration/openapi-validation/api.int.spec.ts) - Integration tests demonstrating various features
+- [Integration tests](../test/integration/openapiValidation.int.spec.ts) - Integration tests demonstrating OpenAPI validation features

@@ -6,8 +6,8 @@ import {
   expectResponse,
   getApplication,
   type TestRequest,
-} from '../../../src';
-import { shoppingCartApi } from '../../fixtures/shopping-cart/api/router';
+} from '../../src';
+import { shoppingCartApi } from '../fixtures/shopping-cart/api/router';
 
 void describe('Optimistic Concurrency - E2E Tests', () => {
   let given: ApiE2ESpecification;

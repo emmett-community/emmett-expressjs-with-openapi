@@ -12,11 +12,11 @@ import {
   expectNewEvents,
   expectResponse,
   getApplication,
-} from '../../../src';
-import { ShoppingCartErrors } from '../../fixtures/shopping-cart/businessLogic';
-import type { ShoppingCartEvent } from '../../fixtures/shopping-cart/shoppingCart';
+} from '../../src';
+import { ShoppingCartErrors } from '../fixtures/shopping-cart/businessLogic';
+import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
 const require = createRequire(import.meta.url);
-const { setEventStore } = require('../../fixtures/shopping-cart/api/operationHandlers') as {
+const { setEventStore } = require('../fixtures/shopping-cart/api/operationHandlers') as {
   setEventStore: (store: EventStore) => void;
 };
 
@@ -32,11 +32,11 @@ void describe('Operation Handlers - Integration Tests', () => {
       return getApplication({
         apis: [],
         openApiValidator: createOpenApiValidatorOptions(
-          path.join(__dirname, '../../fixtures/shopping-cart/api/openapi.yml'),
+          path.join(__dirname, '../fixtures/shopping-cart/api/openapi.yml'),
           {
             validateRequests: true,
             validateResponses: false,
-            operationHandlers: path.join(__dirname, '../../fixtures/shopping-cart/api'),
+            operationHandlers: path.join(__dirname, '../fixtures/shopping-cart/api'),
           },
         ),
       });

@@ -74,19 +74,22 @@ Working examples live under `examples/`:
 
 ## Tests
 
-Integration and E2E coverage for the OpenAPI module is available in:
+The package includes comprehensive test coverage:
 
-- `test/integration/openapi-validation`
-- `test/integration/operation-handlers`
-- `test/e2e/openapi-validation`
-- `test/e2e/operation-handlers`
+- **Unit tests** (`test/unit/`) - Utilities for ETag handling, error mapping
+- **Integration tests** (`test/integration/`) - Basic routing, OpenAPI validation, operation handlers, optimistic concurrency
+- **E2E tests** (`test/e2e/`) - End-to-end workflows for all features
 
-Run `npm run test` to execute the whole suite.
+Run `npm test` to execute the whole suite (unit + integration + e2e) or use:
+
+- `npm run test:unit` - Unit tests only
+- `npm run test:int` - Integration tests only
+- `npm run test:e2e` - E2E tests only
 
 ## Documentation
 
 - **Guide:** [`docs/openapi-validation.md`](docs/openapi-validation.md) – authoritative reference for configuration, advanced usage, and troubleshooting.
-- **Emmett docs:** https://event-driven-io.github.io/emmett/
+- **Emmett docs:** <https://event-driven-io.github.io/emmett/>
 
 ## Contributing
 

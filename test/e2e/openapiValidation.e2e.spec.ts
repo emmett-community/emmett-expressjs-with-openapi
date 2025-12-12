@@ -8,11 +8,11 @@ import {
   expectResponse,
   getApplication,
   type TestRequest,
-} from '../../../src';
-import { shoppingCartApi } from '../../fixtures/shopping-cart/api/routerWithOpenApi';
+} from '../../src';
+import { shoppingCartApi } from '../fixtures/shopping-cart/api/routerWithOpenApi';
 
 const openApiSpecPath = fileURLToPath(
-  new URL('../../fixtures/shopping-cart/api/openapi.yml', import.meta.url),
+  new URL('../fixtures/shopping-cart/api/openapi.yml', import.meta.url),
 );
 
 void describe('OpenAPI Validation - E2E Tests', () => {

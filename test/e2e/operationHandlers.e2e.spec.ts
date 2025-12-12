@@ -10,12 +10,12 @@ import {
   expectResponse,
   getApplication,
   type TestRequest,
-} from '../../../src';
+} from '../../src';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
-const { setEventStore } = require('../../fixtures/shopping-cart/api/operationHandlers') as {
+const { setEventStore } = require('../fixtures/shopping-cart/api/operationHandlers') as {
   setEventStore: (store: EventStore) => void;
 };
 
@@ -34,11 +34,11 @@ void describe('Operation Handlers - E2E Tests', () => {
         getApplication({
           apis: [],
           openApiValidator: createOpenApiValidatorOptions(
-            path.join(__dirname, '../../fixtures/shopping-cart/api/openapi.yml'),
+            path.join(__dirname, '../fixtures/shopping-cart/api/openapi.yml'),
             {
               validateRequests: true,
               validateResponses: false,
-              operationHandlers: path.join(__dirname, '../../fixtures/shopping-cart/api'),
+              operationHandlers: path.join(__dirname, '../fixtures/shopping-cart/api'),
             },
           ),
         }),

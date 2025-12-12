@@ -10,13 +10,13 @@ import {
   expectNewEvents,
   expectResponse,
   getApplication,
-} from '../../../src';
-import { shoppingCartApi } from '../../fixtures/shopping-cart/api/routerWithOpenApi';
-import { ShoppingCartErrors } from '../../fixtures/shopping-cart/businessLogic';
-import type { ShoppingCartEvent } from '../../fixtures/shopping-cart/shoppingCart';
+} from '../../src';
+import { shoppingCartApi } from '../fixtures/shopping-cart/api/routerWithOpenApi';
+import { ShoppingCartErrors } from '../fixtures/shopping-cart/businessLogic';
+import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
 
 const openApiSpecPath = fileURLToPath(
-  new URL('../../fixtures/shopping-cart/api/openapi.yml', import.meta.url),
+  new URL('../fixtures/shopping-cart/api/openapi.yml', import.meta.url),
 );
 
 void describe('OpenAPI Validation - Integration Tests', () => {
