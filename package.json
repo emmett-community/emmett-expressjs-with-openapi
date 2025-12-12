@@ -1,6 +1,7 @@
 {
   "name": "@emmett-community/emmett-expressjs-with-openapi",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "description": "Emmett - Event Sourcing development made simple",
   "scripts": {
