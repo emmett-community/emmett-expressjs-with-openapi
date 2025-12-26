@@ -1,6 +1,6 @@
 {
   "name": "@emmett-community/emmett-expressjs-with-openapi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "type": "module",
   "description": "Emmett - Event Sourcing development made simple",
@@ -60,7 +60,13 @@
   "peerDependenciesMeta": {
     "express-openapi-validator": {
       "optional": true
+    },
+    "@my-f-startup/firebase-auth-express": {
+      "optional": true
     }
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -70,12 +76,14 @@
     "express-openapi-validator": "^5.6.0",
     "glob": "^11.0.0",
     "http-problem-details": "^0.1.7",
+    "@my-f-startup/firebase-auth-express": "0.1.0",
     "npm-run-all2": "^6.2.2",
     "supertest": "^7.0.0",
     "tsup": "^8.2.4",
     "tsx": "^4.17.0",
-    "typescript": "^5.5.4",
-    "yaml": "^2.8.1"
+    "typescript": "^5.5.4"
   },
-  "publishConfig": {"access": "public"}
+  "publishConfig": {
+    "access": "public"
+  }
 }

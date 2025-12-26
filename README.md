@@ -60,6 +60,36 @@ const app = getApplication({
 - Serve the parsed spec via `serveSpec`, configure file upload limits, ignore health-check routes, or validate the spec itself.
 - Reuse `$ref` parsing, custom formats, and file upload middleware exactly as in the upstream validator.
 
+## Firebase Auth (optional)
+
+If you use Firebase Authentication, install the optional peer and plug it into OpenAPI security handlers:
+
+```bash
+npm install @my-f-startup/firebase-auth-express
+```
+
+```typescript
+import admin from 'firebase-admin';
+import {
+  createFirebaseAuthSecurityHandlers,
+  createOpenApiValidatorOptions,
+  getApplication,
+} from '@emmett-community/emmett-expressjs-with-openapi';
+
+admin.initializeApp();
+
+const app = getApplication({
+  apis: [myApi],
+  openApiValidator: createOpenApiValidatorOptions('./openapi.yaml', {
+    validateSecurity: {
+      handlers: createFirebaseAuthSecurityHandlers(),
+    },
+  }),
+});
+```
+
+`@my-f-startup/firebase-auth-express` relies on `firebase-admin`. Make sure the Admin SDK is installed, initialized, and configured for your environment (credentials or emulator).
+
 Head to [`docs/openapi-validation.md`](docs/openapi-validation.md) for the full matrix of options, extended explanations, and complete examples. Keeping that document allows us to document advanced scenarios without bloating the README.
 
 ## Examples

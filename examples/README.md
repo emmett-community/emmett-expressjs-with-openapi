@@ -30,6 +30,7 @@ npm start   # launches http://localhost:3000
 Still useful for small focused demos:
 
 - [basic/](./basic/) – bare minimum wiring for validation.
+- [firebase-auth/](./firebase-auth/) – Firebase Auth + operation handlers + guards.
 - [with-security/](./with-security/) – standalone security handler example.
 - [operation-handlers/](./operation-handlers/) – automatic routing showcase.
 

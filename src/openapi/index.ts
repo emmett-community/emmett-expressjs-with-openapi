@@ -22,6 +22,8 @@ export type SecurityHandlers = Record<
   (req: any, scopes: string[], schema: any) => boolean | Promise<boolean>
 >;
 
+export * from './firebase-auth';
+
 /**
  * Configuration options for express-openapi-validator middleware.
  * This allows optional validation of API requests and responses against an OpenAPI specification.

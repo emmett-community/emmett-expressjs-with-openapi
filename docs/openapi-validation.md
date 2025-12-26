@@ -188,6 +188,63 @@ const app = getApplication({
 });
 ```
 
+#### Firebase Auth (optional)
+
+Use `@my-f-startup/firebase-auth-express` to validate Firebase ID tokens inside OpenAPI security handlers:
+
+```typescript
+import admin from 'firebase-admin';
+import {
+  createFirebaseAuthSecurityHandlers,
+  createOpenApiValidatorOptions,
+  getApplication,
+} from '@emmett-community/emmett-expressjs-with-openapi';
+
+admin.initializeApp();
+
+const app = getApplication({
+  apis: [myApi],
+  openApiValidator: createOpenApiValidatorOptions('./openapi.yaml', {
+    validateSecurity: {
+      handlers: createFirebaseAuthSecurityHandlers({
+        securitySchemeName: 'bearerAuth',
+      }),
+    },
+  }),
+});
+```
+
+`@my-f-startup/firebase-auth-express` depends on the Firebase Admin SDK. Ensure `firebase-admin` is installed and initialized (or configured for the Auth emulator) before handling requests.
+
+#### Firebase Auth + Operation Handlers
+
+When using `operationHandlers`, keep Firebase Admin initialization alongside the OpenAPI validator setup, and let the security handlers populate `req.auth` for your handlers:
+
+```typescript
+import admin from 'firebase-admin';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  createFirebaseAuthSecurityHandlers,
+  createOpenApiValidatorOptions,
+  getApplication,
+} from '@emmett-community/emmett-expressjs-with-openapi';
+
+admin.initializeApp();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = getApplication({
+  openApiValidator: createOpenApiValidatorOptions('./openapi.yaml', {
+    operationHandlers: path.join(__dirname, './handlers'),
+    validateSecurity: {
+      handlers: createFirebaseAuthSecurityHandlers(),
+    },
+  }),
+});
+```
+
 ### Serving the OpenAPI Specification
 
 Serve your OpenAPI spec at a public endpoint:
