@@ -64,6 +64,7 @@ jobs:
         run: npm config delete //registry.npmjs.org/:_authToken
 
       - name: Publish package on NPM
-        run: npm publish --access public
+        # --provenance is required to trigger OIDC for Trusted Publishers.
+        run: npm publish --provenance --access public
         env:
           NODE_ENV: production
