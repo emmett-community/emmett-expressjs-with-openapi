@@ -36,11 +36,11 @@ jobs:
         id: firebase_version
         run: |
           VERSION=$(node -p "require('./package.json').peerDependencies?.['@my-f-startup/firebase-auth-express'] || ''")
-          if [ -z \"$VERSION\" ]; then
-            echo \"Missing peerDependencies entry for @my-f-startup/firebase-auth-express\" >&2
+          if [ -z "$VERSION" ]; then
+            echo "Missing peerDependencies entry for @my-f-startup/firebase-auth-express" >&2
             exit 1
           fi
-          echo \"version=$VERSION\" >> \"$GITHUB_OUTPUT\"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install firebase-auth-express for tests
         run: npm install --no-save "@my-f-startup/firebase-auth-express@${{ steps.firebase_version.outputs.version }}"
