@@ -54,6 +54,7 @@
     "express": "^4.19.2",
     "express-async-errors": "^3.1.1",
     "express-openapi-validator": "^5.3.7",
+    "@my-f-startup/firebase-auth-express": "0.1.0",
     "http-problem-details": "^0.1.5",
     "supertest": "^7.0.0"
   },
@@ -76,7 +77,6 @@
     "express-openapi-validator": "^5.6.0",
     "glob": "^11.0.0",
     "http-problem-details": "^0.1.7",
-    "@my-f-startup/firebase-auth-express": "0.1.0",
     "npm-run-all2": "^6.2.2",
     "supertest": "^7.0.0",
     "tsup": "^8.2.4",
