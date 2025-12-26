@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "license": "MIT",
   "type": "module",
-  "description": "Emmett - Event Sourcing development made simple",
+  "description": "Express.js utilities for Emmett applications that want OpenAPI 3.x validation without pulling the whole Emmett core",
   "scripts": {
     "build": "tsup",
     "build:ts": "tsc",
@@ -70,6 +70,7 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
+    "@my-f-startup/firebase-auth-express": "0.1.0",
     "@types/express": "^4.17.21",
     "@types/supertest": "^6.0.2",
     "express": "^4.21.2",

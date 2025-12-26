@@ -22,7 +22,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24.x"
           cache: "npm"
 
       - name: Validate semver tag
@@ -44,42 +44,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Resolve firebase-auth-express version
-        id: firebase_version
-        run: |
-          VERSION=$(node -p "require('./package.json').peerDependencies?.['@my-f-startup/firebase-auth-express'] || ''")
-          if [ -z "$VERSION" ]; then
-            echo "Missing peerDependencies entry for @my-f-startup/firebase-auth-express" >&2
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Install firebase-auth-express for build
-        run: npm install --no-save "@my-f-startup/firebase-auth-express@${{ steps.firebase_version.outputs.version }}"
-
       - name: Build
         run: npm run build
         env:
-          NODE_ENV: production
-
-      # - name: Ensure OIDC is available
-      #   run: |
-      #     if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ] || [ -z "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
-      #       echo "OIDC environment is not available. Check permissions: id-token: write and trusted publisher config." >&2
-      #       exit 1
-      #     fi
-
-      # - name: Debug npm auth
-      #   run: |
-      #     echo "=== .npmrc ==="
-      #     cat ~/.npmrc || echo "No .npmrc"
-      #     echo ""
-      #     echo "=== npm config list ==="
-      #     npm config list
+          NODE_ENV: production      
 
       - name: Publish package on NPM
         run: npm publish
         env:
-          NODE_ENV: production
-          # NODE_AUTH_TOKEN: ""
-          # NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/npmrc
+          NODE_ENV: production          
