@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
       - name: Validate semver tag
@@ -60,11 +59,24 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Clear npm auth token
-        run: npm config delete //registry.npmjs.org/:_authToken
+      - name: Ensure OIDC is available
+        run: |
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ] || [ -z "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+            echo "OIDC environment is not available. Check permissions: id-token: write and trusted publisher config." >&2
+            exit 1
+          fi
+
+      - name: Debug npm auth
+        run: |
+          echo "=== .npmrc ==="
+          cat ~/.npmrc || echo "No .npmrc"
+          echo ""
+          echo "=== npm config list ==="
+          npm config list
 
       - name: Publish package on NPM
-        # --provenance is required to trigger OIDC for Trusted Publishers.
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_ENV: production
+          NODE_AUTH_TOKEN: ""
+          NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/npmrc
