@@ -216,6 +216,8 @@ const app = getApplication({
 
 `@my-f-startup/firebase-auth-express` depends on the Firebase Admin SDK. Ensure `firebase-admin` is installed and initialized (or configured for the Auth emulator) before handling requests.
 
+For a full working example, see `examples/firebase-auth`.
+
 #### Firebase Auth + Operation Handlers
 
 When using `operationHandlers`, keep Firebase Admin initialization alongside the OpenAPI validator setup, and let the security handlers populate `req.auth` for your handlers:
@@ -549,4 +551,5 @@ startAPI(app, { port: 3000 });
 - [Basic example](../examples/basic/index.ts) - Basic OpenAPI validation with manual routes.
 - [With security](../examples/with-security/index.ts) - Custom security handlers (JWT, API keys).
 - [Operation handlers](../examples/operation-handlers/index.ts) - Using operation handlers for automatic routing.
+- [Firebase Auth](../examples/firebase-auth/index.ts) - Firebase Auth security handlers with operation handlers.
 - [Integration tests](../test/integration/openapiValidation.int.spec.ts) - Integration tests demonstrating OpenAPI validation features

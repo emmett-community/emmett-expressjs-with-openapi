@@ -101,6 +101,7 @@ Working examples live under `examples/`:
   - `examples/basic` – manual routes + validation (minimal scaffolding).
   - `examples/with-security` – standalone security handler demo.
   - `examples/operation-handlers` – barebones `operationHandlers` showcase.
+  - `examples/firebase-auth` – Firebase Auth security handlers with operation handlers.
 
 ## Tests
 
