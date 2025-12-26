@@ -12,6 +12,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types';
 
+type OpenApiDocument = OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1;
+
 export type HandlerModuleInfo = {
   moduleName: string; // e.g., "shoppingCarts"
   relativePath: string; // from x-eov-operation-handler
@@ -27,7 +29,7 @@ export type HandlerModuleInfo = {
  * @returns Array of handler module information
  */
 export async function extractHandlerModules(
-  apiSpec: string | OpenAPIV3.Document,
+  apiSpec: string | OpenApiDocument,
   handlersBasePath: string,
 ): Promise<HandlerModuleInfo[]> {
   // Load spec if it's a file path
@@ -84,7 +86,7 @@ export async function extractHandlerModules(
  */
 async function loadOpenApiSpec(
   filePath: string,
-): Promise<OpenAPIV3.Document> {
+): Promise<OpenApiDocument> {
   try {
     const content = await readFile(filePath, 'utf-8');
     const ext = path.extname(filePath).toLowerCase();
