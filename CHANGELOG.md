@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-29
+
+### Added
+
+- Optional Pino HTTP logging via the `pinoHttp` application option
+- Optional `pino-http` peer dependency
+
+### Documentation
+
+- Documented optional Pino HTTP usage in the README
+
+## [0.2.0] - 2025-12-26
+
+### Added
+
+- Optional Firebase Auth security handlers (`createFirebaseAuthSecurityHandlers`)
+- Firebase Auth example and docs updates
+- Unit, integration, and e2e tests for Firebase Auth
+- Optional `@my-f-startup/firebase-auth-express` peer dependency
+
+### Changed
+
+- OpenAPI document type updated for broader compatibility
+
 ## [0.1.0] - 2025-12-12
 
 ### Added
@@ -45,4 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shopping cart example with full documentation
 - Test organization and naming conventions
 
+[0.3.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.3.0
+[0.2.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.2.0
 [0.1.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.1.0
