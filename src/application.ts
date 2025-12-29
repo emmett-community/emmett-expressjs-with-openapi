@@ -14,6 +14,13 @@ import type { ErrorToProblemDetailsMapping } from './responses';
 export type WebApiSetup = (router: Router) => void;
 // #endregion web-api-setup
 
+/**
+ * Options forwarded to pino-http. Typed loosely to avoid hard dependency.
+ *
+ * @see https://github.com/pinojs/pino-http
+ */
+export type PinoHttpOptions = Record<string, unknown>;
+
 export type ApplicationOptions = {
   apis?: WebApiSetup[];
   mapError?: ErrorToProblemDetailsMapping;
@@ -21,6 +28,25 @@ export type ApplicationOptions = {
   disableJsonMiddleware?: boolean;
   disableUrlEncodingMiddleware?: boolean;
   disableProblemDetailsMiddleware?: boolean;
+  /**
+   * Optional Pino HTTP logger configuration.
+   * When true, enables pino-http with defaults.
+   * When an object, forwards the options to pino-http.
+   * Requires the 'pino-http' package to be installed.
+   *
+   * @see https://github.com/pinojs/pino-http
+   * @example
+   * ```typescript
+   * const app = await getApplication({
+   *   pinoHttp: true,
+   * });
+   *
+   * const app = await getApplication({
+   *   pinoHttp: { autoLogging: false },
+   * });
+   * ```
+   */
+  pinoHttp?: boolean | PinoHttpOptions;
   /**
    * Optional OpenAPI validator configuration.
    * When provided, enables request/response validation against an OpenAPI specification.
@@ -60,6 +86,7 @@ export const getApplication = async (options: ApplicationOptions) => {
     disableJsonMiddleware,
     disableUrlEncodingMiddleware,
     disableProblemDetailsMiddleware,
+    pinoHttp,
     openApiValidator,
   } = options;
 
@@ -68,6 +95,33 @@ export const getApplication = async (options: ApplicationOptions) => {
   // disabling default etag behaviour
   // to use etags in if-match and if-not-match headers
   app.set('etag', enableDefaultExpressEtag ?? false);
+
+  // add Pino HTTP logger middleware if configured
+  if (pinoHttp !== undefined && pinoHttp !== false) {
+    try {
+      const require = createRequire(import.meta.url);
+      const mod = require('pino-http') as Record<string, unknown>;
+      const provider = (mod.default ?? mod) as unknown;
+
+      if (typeof provider !== 'function') {
+        throw new Error('Invalid pino-http module: missing default export');
+      }
+
+      const options = pinoHttp === true ? undefined : pinoHttp;
+      const middleware = (
+        provider as (opts?: PinoHttpOptions) => RequestHandler
+      )(options);
+      app.use(middleware);
+    } catch {
+      console.warn(
+        'Pino HTTP configuration provided but pino-http package is not installed. ' +
+          'Install it with: npm install pino-http',
+      );
+      throw new Error(
+        'pino-http package is required when pinoHttp option is used',
+      );
+    }
+  }
 
   // add json middleware
   if (!disableJsonMiddleware) app.use(express.json());
