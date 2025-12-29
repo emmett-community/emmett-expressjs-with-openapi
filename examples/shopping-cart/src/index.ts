@@ -24,6 +24,7 @@ const eventStore = getInMemoryEventStore();
 const messageBus = getInMemoryMessageBus();
 const getUnitPrice = (_productId: string) => Promise.resolve(100);
 const getCurrentTime = () => new Date();
+const isProduction = process.env.NODE_ENV === 'production';
 
 messageBus.subscribe((event: ShoppingCartConfirmed) => {
   if (event.type === 'ShoppingCartConfirmed') {
@@ -91,9 +92,21 @@ const mapErrorToProblemDetails: ErrorToProblemDetailsMapping = (error) => {
 
 export const app: Application = await getApplication({
   mapError: mapErrorToProblemDetails,
+  pinoHttp: isProduction
+    ? true
+    : {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'SYS:standard',
+            ignore: 'pid,hostname',
+          },
+        },
+      },
   openApiValidator: createOpenApiValidatorOptions(openApiFilePath, {
       validateRequests: true,
-      validateResponses: process.env.NODE_ENV !== 'production',
+      validateResponses: !isProduction,
       validateFormats: 'fast',
       serveSpec: '/api-docs/openapi.yml',
       validateSecurity: { handlers: securityHandlers },
