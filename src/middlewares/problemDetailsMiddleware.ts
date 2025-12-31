@@ -1,15 +1,18 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ProblemDocument } from 'http-problem-details';
 import { sendProblem, type ErrorToProblemDetailsMapping } from '..';
+import { type Logger, safeLog } from '../observability';
 
 export const problemDetailsMiddleware =
-  (mapError?: ErrorToProblemDetailsMapping) =>
+  (mapError?: ErrorToProblemDetailsMapping, logger?: Logger) =>
   (
     error: Error,
     request: Request,
     response: Response,
     _next: NextFunction,
   ): void => {
+    safeLog.error(logger, 'Request error', error);
+
     let problemDetails: ProblemDocument | undefined;
 
     if (mapError) problemDetails = mapError(error, request);

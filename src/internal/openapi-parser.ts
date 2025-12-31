@@ -11,6 +11,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types';
+import { type Logger, safeLog } from '../observability';
 
 type OpenApiDocument = OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1;
 
@@ -26,15 +27,22 @@ export type HandlerModuleInfo = {
  *
  * @param apiSpec - OpenAPI spec (file path or object)
  * @param handlersBasePath - Base path for handler modules
+ * @param logger - Optional logger for debug output
  * @returns Array of handler module information
  */
 export async function extractHandlerModules(
   apiSpec: string | OpenApiDocument,
   handlersBasePath: string,
+  logger?: Logger,
 ): Promise<HandlerModuleInfo[]> {
+  safeLog.debug(logger, 'Extracting handler modules from OpenAPI spec', {
+    apiSpec: typeof apiSpec === 'string' ? apiSpec : '<object>',
+    handlersBasePath,
+  });
+
   // Load spec if it's a file path
   const spec =
-    typeof apiSpec === 'string' ? await loadOpenApiSpec(apiSpec) : apiSpec;
+    typeof apiSpec === 'string' ? await loadOpenApiSpec(apiSpec, logger) : apiSpec;
 
   // Validate spec structure
   if (!spec.paths || typeof spec.paths !== 'object') {
@@ -78,7 +86,14 @@ export async function extractHandlerModules(
     }
   }
 
-  return Array.from(handlersMap.values());
+  const modules = Array.from(handlersMap.values());
+
+  safeLog.debug(logger, 'Extracted handler modules', {
+    count: modules.length,
+    modules: modules.map((m) => m.moduleName),
+  });
+
+  return modules;
 }
 
 /**
@@ -86,22 +101,32 @@ export async function extractHandlerModules(
  */
 async function loadOpenApiSpec(
   filePath: string,
+  logger?: Logger,
 ): Promise<OpenApiDocument> {
+  safeLog.debug(logger, 'Loading OpenAPI spec file', { filePath });
   try {
     const content = await readFile(filePath, 'utf-8');
     const ext = path.extname(filePath).toLowerCase();
 
+    let parsed: OpenApiDocument;
     if (ext === '.json') {
-      return JSON.parse(content);
+      parsed = JSON.parse(content);
     } else if (ext === '.yaml' || ext === '.yml') {
       // Dynamic import to avoid bundling yaml if not needed
       const yaml = await import('yaml');
-      return yaml.parse(content);
+      parsed = yaml.parse(content);
     } else {
       throw new Error(
         `Unsupported OpenAPI file format: ${ext}. Use .json, .yaml, or .yml`,
       );
     }
+
+    safeLog.debug(logger, 'OpenAPI spec loaded successfully', {
+      filePath,
+      format: ext,
+    });
+
+    return parsed;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`OpenAPI specification file not found: ${filePath}`);

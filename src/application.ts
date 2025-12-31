@@ -1,3 +1,4 @@
+import { trace, SpanStatusCode } from '@opentelemetry/api';
 import express, {
   Router,
   type Application,
@@ -7,8 +8,11 @@ import 'express-async-errors';
 import http from 'http';
 import { createRequire } from 'node:module';
 import { problemDetailsMiddleware } from './middlewares/problemDetailsMiddleware';
+import { type Logger, type ObservabilityOptions, safeLog } from './observability';
 import type { OpenApiValidatorOptions } from './openapi';
 import type { ErrorToProblemDetailsMapping } from './responses';
+
+const tracer = trace.getTracer('@emmett-community/emmett-expressjs-with-openapi');
 
 // #region web-api-setup
 export type WebApiSetup = (router: Router) => void;
@@ -74,6 +78,22 @@ export type ApplicationOptions = {
    * ```
    */
   openApiValidator?: OpenApiValidatorOptions;
+  /**
+   * Optional observability configuration for logging.
+   * When not provided, the library operates silently (no logs).
+   *
+   * @example
+   * ```typescript
+   * import pino from 'pino';
+   *
+   * const logger = pino();
+   *
+   * const app = await getApplication({
+   *   observability: { logger },
+   * });
+   * ```
+   */
+  observability?: ObservabilityOptions;
 };
 
 export const getApplication = async (options: ApplicationOptions) => {
@@ -88,7 +108,16 @@ export const getApplication = async (options: ApplicationOptions) => {
     disableProblemDetailsMiddleware,
     pinoHttp,
     openApiValidator,
+    observability,
   } = options;
+
+  const logger = observability?.logger;
+
+  safeLog.debug(logger, 'Initializing Express application', {
+    hasApis: !!apis?.length,
+    hasOpenApiValidator: !!openApiValidator,
+    hasPinoHttp: !!pinoHttp,
+  });
 
   const router = Router();
 
@@ -112,10 +141,10 @@ export const getApplication = async (options: ApplicationOptions) => {
         provider as (opts?: PinoHttpOptions) => RequestHandler
       )(options);
       app.use(middleware);
-    } catch {
-      console.warn(
-        'Pino HTTP configuration provided but pino-http package is not installed. ' +
-          'Install it with: npm install pino-http',
+    } catch (error) {
+      safeLog.warn(
+        logger,
+        'Pino HTTP configuration provided but pino-http package is not installed. Install it with: npm install pino-http',
       );
       throw new Error(
         'pino-http package is required when pinoHttp option is used',
@@ -159,23 +188,55 @@ export const getApplication = async (options: ApplicationOptions) => {
           './internal/handler-importer.js'
         );
 
-        try {
-          // Parse OpenAPI spec to find handler modules
-          const modules = await extractHandlerModules(
-            openApiValidator.apiSpec,
-            handlersBasePath,
-          );
+        // Parse OpenAPI spec to find handler modules
+        const modules = await tracer.startActiveSpan(
+          'emmett.openapi.parse_spec',
+          async (span) => {
+            try {
+              const result = await extractHandlerModules(
+                openApiValidator.apiSpec,
+                handlersBasePath,
+                logger,
+              );
+              span.setAttribute('emmett.handlers.count', result.length);
+              span.setStatus({ code: SpanStatusCode.OK });
+              return result;
+            } catch (error) {
+              span.recordException(error as Error);
+              span.setStatus({ code: SpanStatusCode.ERROR });
+              throw error;
+            } finally {
+              span.end();
+            }
+          },
+        );
 
-          // Dynamically import and register all handler modules
-          const importedHandlers = await importAndRegisterHandlers(modules);
+        // Dynamically import and register all handler modules
+        const importedHandlers = await tracer.startActiveSpan(
+          'emmett.http.import_handlers',
+          async (span) => {
+            try {
+              const result = await importAndRegisterHandlers(modules, logger);
+              span.setAttribute(
+                'emmett.handlers.count',
+                Object.keys(result).length,
+              );
+              span.setStatus({ code: SpanStatusCode.OK });
+              return result;
+            } catch (error) {
+              safeLog.error(logger, 'Failed to auto-import handler modules', error);
+              span.recordException(error as Error);
+              span.setStatus({ code: SpanStatusCode.ERROR });
+              throw error;
+            } finally {
+              span.end();
+            }
+          },
+        );
 
-          // Call user's initializeHandlers callback with imported modules
-          if (openApiValidator.initializeHandlers) {
-            await openApiValidator.initializeHandlers(importedHandlers);
-          }
-        } catch (error) {
-          console.error('Failed to auto-import handler modules:', error);
-          throw error;
+        // Call user's initializeHandlers callback with imported modules
+        if (openApiValidator.initializeHandlers) {
+          await openApiValidator.initializeHandlers(importedHandlers);
         }
       }
     } else {
@@ -225,10 +286,10 @@ export const getApplication = async (options: ApplicationOptions) => {
       } else {
         app.use(middleware);
       }
-    } catch {
-      console.warn(
-        'OpenAPI validator configuration provided but express-openapi-validator package is not installed. ' +
-          'Install it with: npm install express-openapi-validator',
+    } catch (error) {
+      safeLog.warn(
+        logger,
+        'OpenAPI validator configuration provided but express-openapi-validator package is not installed. Install it with: npm install express-openapi-validator',
       );
       throw new Error(
         'express-openapi-validator package is required when openApiValidator option is used',
@@ -246,24 +307,30 @@ export const getApplication = async (options: ApplicationOptions) => {
 
   // add problem details middleware
   if (!disableProblemDetailsMiddleware)
-    app.use(problemDetailsMiddleware(mapError));
+    app.use(problemDetailsMiddleware(mapError, logger));
+
+  safeLog.info(logger, 'Express application initialized');
 
   return app;
 };
 
 export type StartApiOptions = {
   port?: number;
+  /**
+   * Optional logger for lifecycle events.
+   */
+  logger?: Logger;
 };
 
 export const startAPI = (
   app: Application,
   options: StartApiOptions = { port: 3000 },
 ) => {
-  const { port } = options;
+  const { port, logger } = options;
   const server = http.createServer(app);
 
   server.on('listening', () => {
-    console.info('server up listening');
+    safeLog.info(logger, 'Server up listening', { port });
   });
 
   return server.listen(port);

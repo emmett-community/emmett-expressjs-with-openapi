@@ -31,16 +31,19 @@ npm install @my-f-startup/firebase-auth-express  # optional: Firebase Auth handl
 ### Peer Dependencies
 
 Required:
+
 - `@event-driven-io/emmett` ^0.39.1
 - `express` ^4.19.2
 - `express-async-errors` ^3.1.1
 - `http-problem-details` ^0.1.5
 
 TypeScript types:
+
 - `@types/express` ^4.17.21
 - `@types/supertest` ^6.0.2 (if using testing helpers)
 
 Optional (feature-gated):
+
 - `express-openapi-validator` ^5.3.7 (OpenAPI validation)
 - `pino-http` ^9.0.0 (HTTP logging)
 - `@my-f-startup/firebase-auth-express` 0.1.0 (Firebase Auth handlers)
@@ -103,6 +106,7 @@ const app = await getApplication({
 ```
 
 Highlights:
+
 - Enable/disable request or response validation, including per-field tweaks (coercion, unknown query params, removing additional fields, etc.).
 - Register custom security handlers with `validateSecurity.handlers`.
 - Serve the parsed spec via `serveSpec`, configure file upload limits, ignore health-check routes, or validate the spec itself.
@@ -156,25 +160,67 @@ const app = await getApplication({
 
 `@my-f-startup/firebase-auth-express` relies on `firebase-admin`. Make sure the Admin SDK is installed, initialized, and configured for your environment (credentials or emulator).
 
+## Observability
+
+This package supports optional logging and tracing.
+
+### Logging
+
+Inject a Pino-compatible logger:
+
+```typescript
+import pino from 'pino';
+
+const logger = pino();
+
+const app = await getApplication({
+  observability: { logger },
+});
+
+startAPI(app, { port: 3000, logger });
+```
+
+No logs are emitted when logger is not provided.
+
+### Tracing
+
+If your application initializes OpenTelemetry, this package will emit spans automatically. Tracing is passive - spans are no-ops when OpenTelemetry is not configured.
+
+```typescript
+import { tracedOn, OK } from '@emmett-community/emmett-expressjs-with-openapi';
+
+router.post('/carts', tracedOn(async (req) => {
+  // Your handler logic
+  return OK({ body: { success: true } });
+}));
+```
+
+This package never initializes OpenTelemetry - configure your tracer provider in your application.
+
 ## API Reference
 
 ### Application
+
 - `getApplication(options)` - Creates and configures the Express app.
 - `startAPI(app, options)` - Starts the HTTP server.
 
 ### OpenAPI
+
 - `createOpenApiValidatorOptions(apiSpec, options)` - Helper to assemble OpenAPI validator config.
 - `isOpenApiValidatorAvailable()` - Type guard for optional validator dependency.
 - `createFirebaseAuthSecurityHandlers(options)` - Firebase Auth security handlers.
 - `registerHandlerModule(handlersPath, module)` - Manual registration for operation handlers.
 
 ### HTTP helpers
+
 - `send`, `sendCreated`, `sendAccepted`, `sendProblem` - Standard HTTP responses.
 
 ### ETag helpers
+
 - `toWeakETag`, `getETagFromIfMatch`, `getETagFromIfNotMatch`, `getETagValueFromIfMatch`, `setETag`.
 
 ### Testing helpers
+
 - `ApiSpecification`, `ApiE2ESpecification`
 - `expect`, `expectNewEvents`, `expectResponse`, `expectError`
 
