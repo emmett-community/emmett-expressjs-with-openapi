@@ -182,6 +182,51 @@ startAPI(app, { port: 3000, logger });
 
 No logs are emitted when logger is not provided.
 
+#### Logger Contract
+
+This package defines the canonical Logger interface for the Emmett ecosystem. Implementations (Pino, Winston, etc.) MUST adapt to this contract.
+
+```typescript
+interface Logger {
+  debug(context: Record<string, unknown>, message?: string): void;
+  info(context: Record<string, unknown>, message?: string): void;
+  warn(context: Record<string, unknown>, message?: string): void;
+  error(context: Record<string, unknown>, message?: string): void;
+}
+```
+
+**Semantic Rules:**
+
+- `context` (first parameter): Structured data for the log entry
+- `message` (second parameter): Human-readable message
+- The order is never inverted
+
+Pino implements this contract natively. For other loggers like Winston, you need to create an adapter.
+
+> **Note**: The adapter example below is for demonstration purposes only. It is NOT part of the public API and NOT an official recommendation. Users must implement their own adapters for non-Pino loggers.
+
+```typescript
+import winston from 'winston';
+import type { Logger } from '@emmett-community/emmett-expressjs-with-openapi';
+
+const winstonLogger = winston.createLogger({ /* config */ });
+
+const logger: Logger = {
+  debug(context, message) {
+    winstonLogger.debug(message ?? '', context);
+  },
+  info(context, message) {
+    winstonLogger.info(message ?? '', context);
+  },
+  warn(context, message) {
+    winstonLogger.warn(message ?? '', context);
+  },
+  error(context, message) {
+    winstonLogger.error(message ?? '', context);
+  },
+};
+```
+
 ### Tracing
 
 If your application initializes OpenTelemetry, this package will emit spans automatically. Tracing is passive - spans are no-ops when OpenTelemetry is not configured.

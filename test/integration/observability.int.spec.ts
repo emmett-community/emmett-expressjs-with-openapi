@@ -25,7 +25,12 @@ void describe('Observability - Integration Tests', () => {
   void describe('getApplication with logger', () => {
     void it('should emit info log on initialization when logger provided', async () => {
       const infoFn = mock.fn();
-      const logger: Logger = { info: infoFn };
+      const logger: Logger = {
+        debug: mock.fn(),
+        info: infoFn,
+        warn: mock.fn(),
+        error: mock.fn(),
+      };
 
       const app = await getApplication({
         apis: [],
@@ -35,16 +40,22 @@ void describe('Observability - Integration Tests', () => {
       assert.ok(app);
       assert.ok(infoFn.mock.calls.length > 0);
 
-      // Verify initialization message was logged
-      const initMessage = infoFn.mock.calls.find((call) =>
-        (call.arguments[0] as string).includes('initialized'),
+      // Verify (context, message) contract: message is second argument
+      const initCall = infoFn.mock.calls.find(
+        (call) =>
+          (call.arguments[1] as string | undefined)?.includes('initialized'),
       );
-      assert.ok(initMessage, 'Expected initialization message to be logged');
+      assert.ok(initCall, 'Expected initialization message to be logged');
     });
 
     void it('should emit debug log on initialization when logger provided', async () => {
       const debugFn = mock.fn();
-      const logger: Logger = { debug: debugFn };
+      const logger: Logger = {
+        debug: debugFn,
+        info: mock.fn(),
+        warn: mock.fn(),
+        error: mock.fn(),
+      };
 
       const app = await getApplication({
         apis: [],
@@ -54,24 +65,46 @@ void describe('Observability - Integration Tests', () => {
       assert.ok(app);
       assert.ok(debugFn.mock.calls.length > 0);
 
-      // Verify initialization debug message
-      const initMessage = debugFn.mock.calls.find((call) =>
-        (call.arguments[0] as string).includes('Initializing'),
+      // Verify (context, message) contract: message is second argument
+      const initMessage = debugFn.mock.calls.find(
+        (call) =>
+          (call.arguments[1] as string | undefined)?.includes('Initializing'),
       );
-      assert.ok(initMessage, 'Expected initialization debug message to be logged');
+      assert.ok(
+        initMessage,
+        'Expected initialization debug message to be logged',
+      );
     });
 
-    void it('should work with partial logger (only warn)', async () => {
-      const warnFn = mock.fn();
-      const partialLogger: Logger = { warn: warnFn };
+    void it('should pass context as first argument (new contract)', async () => {
+      const debugFn = mock.fn();
+      const logger: Logger = {
+        debug: debugFn,
+        info: mock.fn(),
+        warn: mock.fn(),
+        error: mock.fn(),
+      };
 
-      // This should not throw even though debug/info/error are missing
-      const app = await getApplication({
+      await getApplication({
         apis: [],
-        observability: { logger: partialLogger },
+        observability: { logger },
       });
 
-      assert.ok(app);
+      // Verify that context (object) is first argument
+      const [firstArg, secondArg] = debugFn.mock.calls[0].arguments as [
+        unknown,
+        unknown,
+      ];
+      assert.strictEqual(
+        typeof firstArg,
+        'object',
+        'First argument should be context object',
+      );
+      assert.strictEqual(
+        typeof secondArg,
+        'string',
+        'Second argument should be message string',
+      );
     });
 
     void it('should work with full logger implementation', async () => {
@@ -93,7 +126,6 @@ void describe('Observability - Integration Tests', () => {
       });
 
       assert.ok(app);
-      // Should have called debug and info during initialization
       assert.ok(debugFn.mock.calls.length > 0);
       assert.ok(infoFn.mock.calls.length > 0);
     });
@@ -101,14 +133,11 @@ void describe('Observability - Integration Tests', () => {
 
   void describe('silent by default behavior', () => {
     void it('should not emit any logs when no logger is provided', async () => {
-      // We can't easily assert console wasn't called, but we can verify
-      // the app initializes without errors and no exceptions are thrown
       const app = await getApplication({
         apis: [],
       });
 
       assert.ok(app);
-      // The test passes if no errors occur - meaning silent behavior works
     });
   });
 });

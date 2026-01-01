@@ -22,75 +22,155 @@ void describe('Observability - Unit Tests', () => {
       });
     });
 
-    void it('should call logger.debug when provided', () => {
-      const debugFn = mock.fn();
-      const logger: Logger = { debug: debugFn };
+    void describe('translates to (context, message) contract', () => {
+      void it('should call logger.debug with (context, message)', () => {
+        const debugFn = mock.fn();
+        const logger: Logger = {
+          debug: debugFn,
+          info: mock.fn(),
+          warn: mock.fn(),
+          error: mock.fn(),
+        };
 
-      safeLog.debug(logger, 'debug message', { data: 1 });
+        safeLog.debug(logger, 'debug message', { data: 1 });
 
-      assert.strictEqual(debugFn.mock.calls.length, 1);
-      assert.deepStrictEqual(debugFn.mock.calls[0].arguments, [
-        'debug message',
-        { data: 1 },
-      ]);
-    });
-
-    void it('should call logger.info when provided', () => {
-      const infoFn = mock.fn();
-      const logger: Logger = { info: infoFn };
-
-      safeLog.info(logger, 'info message', { data: 2 });
-
-      assert.strictEqual(infoFn.mock.calls.length, 1);
-      assert.deepStrictEqual(infoFn.mock.calls[0].arguments, [
-        'info message',
-        { data: 2 },
-      ]);
-    });
-
-    void it('should call logger.warn when provided', () => {
-      const warnFn = mock.fn();
-      const logger: Logger = { warn: warnFn };
-
-      safeLog.warn(logger, 'warn message', { data: 3 });
-
-      assert.strictEqual(warnFn.mock.calls.length, 1);
-      assert.deepStrictEqual(warnFn.mock.calls[0].arguments, [
-        'warn message',
-        { data: 3 },
-      ]);
-    });
-
-    void it('should call logger.error when provided', () => {
-      const errorFn = mock.fn();
-      const logger: Logger = { error: errorFn };
-      const testError = new Error('test error');
-
-      safeLog.error(logger, 'error message', testError);
-
-      assert.strictEqual(errorFn.mock.calls.length, 1);
-      assert.deepStrictEqual(errorFn.mock.calls[0].arguments, [
-        'error message',
-        testError,
-      ]);
-    });
-
-    void it('should handle partial logger implementations', () => {
-      const warnFn = mock.fn();
-      const partialLogger: Logger = {
-        warn: warnFn,
-        // debug, info, error not provided
-      };
-
-      assert.doesNotThrow(() => {
-        safeLog.debug(partialLogger, 'debug msg');
-        safeLog.info(partialLogger, 'info msg');
-        safeLog.warn(partialLogger, 'warn msg');
-        safeLog.error(partialLogger, 'error msg');
+        assert.strictEqual(debugFn.mock.calls.length, 1);
+        // Verify NEW contract: (context, message)
+        assert.deepStrictEqual(debugFn.mock.calls[0].arguments, [
+          { data: 1 }, // context first
+          'debug message', // message second
+        ]);
       });
 
-      // Only warn should have been called
-      assert.strictEqual(warnFn.mock.calls.length, 1);
+      void it('should call logger.info with (context, message)', () => {
+        const infoFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: infoFn,
+          warn: mock.fn(),
+          error: mock.fn(),
+        };
+
+        safeLog.info(logger, 'info message', { data: 2 });
+
+        assert.strictEqual(infoFn.mock.calls.length, 1);
+        assert.deepStrictEqual(infoFn.mock.calls[0].arguments, [
+          { data: 2 },
+          'info message',
+        ]);
+      });
+
+      void it('should call logger.warn with (context, message)', () => {
+        const warnFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: mock.fn(),
+          warn: warnFn,
+          error: mock.fn(),
+        };
+
+        safeLog.warn(logger, 'warn message', { data: 3 });
+
+        assert.strictEqual(warnFn.mock.calls.length, 1);
+        assert.deepStrictEqual(warnFn.mock.calls[0].arguments, [
+          { data: 3 },
+          'warn message',
+        ]);
+      });
+
+      void it('should call logger.error with (context, message) and err key for Error', () => {
+        const errorFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: mock.fn(),
+          warn: mock.fn(),
+          error: errorFn,
+        };
+        const testError = new Error('test error');
+
+        safeLog.error(logger, 'error message', testError);
+
+        assert.strictEqual(errorFn.mock.calls.length, 1);
+        // Error is wrapped in { err: Error } for Pino compatibility
+        const [context, message] = errorFn.mock.calls[0].arguments as [
+          Record<string, unknown>,
+          string,
+        ];
+        assert.strictEqual(message, 'error message');
+        assert.ok(context.err instanceof Error);
+        assert.strictEqual((context.err as Error).message, 'test error');
+      });
+    });
+
+    void describe('normalizes data to context object', () => {
+      void it('should pass empty object when data is undefined', () => {
+        const infoFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: infoFn,
+          warn: mock.fn(),
+          error: mock.fn(),
+        };
+
+        safeLog.info(logger, 'message without data');
+
+        assert.deepStrictEqual(infoFn.mock.calls[0].arguments, [
+          {}, // empty context
+          'message without data',
+        ]);
+      });
+
+      void it('should wrap primitives in data key', () => {
+        const infoFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: infoFn,
+          warn: mock.fn(),
+          error: mock.fn(),
+        };
+
+        safeLog.info(logger, 'message with primitive', 42 as unknown);
+
+        assert.deepStrictEqual(infoFn.mock.calls[0].arguments, [
+          { data: 42 },
+          'message with primitive',
+        ]);
+      });
+
+      void it('should wrap arrays in data key', () => {
+        const infoFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: infoFn,
+          warn: mock.fn(),
+          error: mock.fn(),
+        };
+
+        safeLog.info(logger, 'message with array', [1, 2, 3] as unknown);
+
+        assert.deepStrictEqual(infoFn.mock.calls[0].arguments, [
+          { data: [1, 2, 3] },
+          'message with array',
+        ]);
+      });
+
+      void it('should not mutate the original data object', () => {
+        const infoFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: infoFn,
+          warn: mock.fn(),
+          error: mock.fn(),
+        };
+
+        const originalData = { key: 'value', nested: { a: 1 } };
+        const originalDataCopy = { ...originalData };
+
+        safeLog.info(logger, 'message', originalData);
+
+        // Original object should remain unchanged
+        assert.deepStrictEqual(originalData, originalDataCopy);
+      });
     });
 
     void it('should work with a full logger implementation', () => {
