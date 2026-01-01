@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-12-31
+
+### Changed
+
+- `Logger` interface now uses canonical `(context, message?)` signature
+- `safeLog` translates internal `(msg, data)` calls to `(context, message)` format
+- Logger methods are now required (not optional)
+- `context` parameter typed as `Record<string, unknown>` for structured logging
+- Error logging uses `err` key for Pino compatibility
+
+### Added
+
+- `normalizeContext` and `normalizeErrorContext` internal helpers
+- Contract compliance tests for Logger interface
+- Shallow copy in normalization to prevent accidental mutation
+
+### Documentation
+
+- Added Logger Contract section to README
+- Documented semantic rules for `(context, message)` signature
+
 ## [0.4.0] - 2025-12-31
 
 ### Added
@@ -91,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shopping cart example with full documentation
 - Test organization and naming conventions
 
+[0.5.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.5.0
 [0.4.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.4.0
 [0.3.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.3.0
 [0.2.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.2.0
