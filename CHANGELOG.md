@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-01-03
+
+### Changed
+
+- HTTP 4xx errors now log at `warn` level instead of `error` level
+- `supertest` moved from `peerDependencies` to `dependencies` (bundled with package)
+
+### Fixed
+
+- Removed `@types/express` and `@types/supertest` from `peerDependencies` (type packages should only be devDependencies)
+- Removed `supertest` from `peerDependencies` (now bundled as a direct dependency)
+
 ## [0.5.0] - 2025-12-31
 
 ### Changed
@@ -112,6 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shopping cart example with full documentation
 - Test organization and naming conventions
 
+[0.6.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.6.0
 [0.5.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.5.0
 [0.4.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.4.0
 [0.3.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.3.0
