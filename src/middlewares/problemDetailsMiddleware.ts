@@ -11,14 +11,18 @@ export const problemDetailsMiddleware =
     response: Response,
     _next: NextFunction,
   ): void => {
-    safeLog.error(logger, 'Request error', error);
-
     let problemDetails: ProblemDocument | undefined;
 
     if (mapError) problemDetails = mapError(error, request);
 
     problemDetails =
       problemDetails ?? defaultErrorToProblemDetailsMapping(error);
+
+    if (problemDetails.status >= 500) {
+      safeLog.error(logger, 'Server error', error);
+    } else {
+      safeLog.warn(logger, 'Client error', error);
+    }
 
     sendProblem(response, problemDetails.status, { problem: problemDetails });
   };
