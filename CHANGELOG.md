@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-04
+
+### Fixed
+
+- `safeLog.warn` now wraps `Error` instances in `{ err: error }` instead of spreading error properties directly into the log context
+- This prevents error properties like `name` from overwriting the logger name (e.g., pino-pretty showing `(Unauthorized)` instead of the actual logger name)
+
+### Added
+
+- New `normalizeWarnContext` function for proper error handling in warn logs
+- Unit test for `safeLog.warn` with `Error` instances
+
 ## [0.6.0] - 2026-01-03
 
 ### Changed
@@ -128,6 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shopping cart example with full documentation
 - Test organization and naming conventions
 
+[0.7.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.7.0
 [0.6.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.6.0
 [0.5.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.5.0
 [0.4.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.4.0

@@ -60,7 +60,7 @@ void describe('Observability - Unit Tests', () => {
         ]);
       });
 
-      void it('should call logger.warn with (context, message)', () => {
+      void it('should call logger.warn with (context, message) for plain objects', () => {
         const warnFn = mock.fn();
         const logger: Logger = {
           debug: mock.fn(),
@@ -76,6 +76,34 @@ void describe('Observability - Unit Tests', () => {
           { data: 3 },
           'warn message',
         ]);
+      });
+
+      void it('should call logger.warn with (context, message) and err key for Error', () => {
+        const warnFn = mock.fn();
+        const logger: Logger = {
+          debug: mock.fn(),
+          info: mock.fn(),
+          warn: warnFn,
+          error: mock.fn(),
+        };
+        const testError = new Error('test error');
+        (testError as unknown as Record<string, unknown>).name = 'Unauthorized';
+        (testError as unknown as Record<string, unknown>).status = 401;
+
+        safeLog.warn(logger, 'warn message', testError);
+
+        assert.strictEqual(warnFn.mock.calls.length, 1);
+        const [context, message] = warnFn.mock.calls[0].arguments as [
+          Record<string, unknown>,
+          string,
+        ];
+        assert.strictEqual(message, 'warn message');
+        // Error is wrapped in { err: Error } - NOT spread
+        assert.ok(context.err instanceof Error);
+        assert.strictEqual((context.err as Error).message, 'test error');
+        // Should NOT have error properties spread to context
+        assert.strictEqual(context.name, undefined);
+        assert.strictEqual(context.status, undefined);
       });
 
       void it('should call logger.error with (context, message) and err key for Error', () => {
