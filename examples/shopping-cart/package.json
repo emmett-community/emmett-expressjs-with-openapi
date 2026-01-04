@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Full shopping cart sample using emmett + express-openapi-validator",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "build": "tsup --config tsup.config.ts",
+    "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "run-s test:unit test:int test:e2e",
     "test:unit": "glob -d -c \"node --import tsx --import tsx/cjs --test\" \"test/**/*.unit.spec.ts\"",
@@ -31,6 +32,7 @@
     "@types/supertest": "^6.0.2",
     "glob": "^11.0.0",
     "npm-run-all2": "^6.2.2",
+    "tsup": "^8.2.4",
     "tsx": "^4.19.2",
     "typescript": "^5.5.4"
   }

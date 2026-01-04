@@ -11,11 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - HTTP 4xx errors now log at `warn` level instead of `error` level
 - `supertest` moved from `peerDependencies` to `dependencies` (bundled with package)
+- Shopping cart example build now uses a local `tsup.config.ts` with explicit entry points for the app and handlers
+- Shopping cart example build no longer uses a post-build patch script or a separate `tsconfig.build.json`
+- Shopping cart example adds `tsup` as a dev dependency and simplifies the build script
 
 ### Fixed
 
 - Removed `@types/express` and `@types/supertest` from `peerDependencies` (type packages should only be devDependencies)
 - Removed `supertest` from `peerDependencies` (now bundled as a direct dependency)
+- ESM handler auto-import now resolves on-disk module extensions and caches both resolved and extensionless paths to avoid file URL import failures
 
 ## [0.5.0] - 2025-12-31
 
