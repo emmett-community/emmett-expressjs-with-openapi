@@ -104,7 +104,7 @@ export const safeLog = {
   },
   warn: (logger: Logger | undefined, msg: string, data?: unknown) => {
     if (!logger) return;
-    logger.warn(normalizeContext(data), msg);
+    logger.warn(normalizeWarnContext(data), msg);
   },
   error: (logger: Logger | undefined, msg: string, error?: unknown) => {
     if (!logger) return;
@@ -119,6 +119,24 @@ export const safeLog = {
 function normalizeContext(data: unknown): Record<string, unknown> {
   if (data === undefined || data === null) {
     return {};
+  }
+  if (typeof data === 'object' && !Array.isArray(data)) {
+    return { ...(data as Record<string, unknown>) };
+  }
+  return { data };
+}
+
+/**
+ * Normalize data to context object for warn log method.
+ * Uses 'err' key for Error instances to prevent property leakage (like 'name' overwriting logger name).
+ * Creates a shallow copy to avoid accidental mutation of the original object.
+ */
+function normalizeWarnContext(data: unknown): Record<string, unknown> {
+  if (data === undefined || data === null) {
+    return {};
+  }
+  if (data instanceof Error) {
+    return { err: data };
   }
   if (typeof data === 'object' && !Array.isArray(data)) {
     return { ...(data as Record<string, unknown>) };
