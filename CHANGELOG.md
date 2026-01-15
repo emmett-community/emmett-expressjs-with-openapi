@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-15
+
+### Added
+
+- Environment variable support for Pino HTTP logging:
+  - `LOG_HTTP_ENABLED`: Set to `'true'` to enable HTTP logging via environment (default: undefined)
+  - `PINO_HTTP_AUTO_LOGGING`: Set to `'false'` to disable automatic request/response logging (default: `'true'`)
+- Enhanced `buildPinoHttpOptionsFromEnv()` helper function to construct pino-http options from environment variables
+- Integration tests for HTTP logging environment variable configuration
+
+### Changed
+
+- `pinoHttp` option now supports configuration via environment variables when not explicitly provided in code
+- Code-provided options take precedence over environment variables (explicit configuration > env vars)
+- Updated README documentation with examples of enabling HTTP logging via `LOG_HTTP_ENABLED`
+
 ## [0.7.0] - 2026-01-04
 
 ### Fixed
@@ -140,6 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shopping cart example with full documentation
 - Test organization and naming conventions
 
+[0.8.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.8.0
 [0.7.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.7.0
 [0.6.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.6.0
 [0.5.0]: https://github.com/emmett-community/emmett-expressjs-with-openapi/releases/tag/0.5.0

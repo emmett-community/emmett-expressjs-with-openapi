@@ -14,6 +14,43 @@ import type { ErrorToProblemDetailsMapping } from './responses';
 
 const tracer = trace.getTracer('@emmett-community/emmett-expressjs-with-openapi');
 
+/**
+ * Helper function to build pino-http options from environment variables.
+ * Environment variables are only used when pinoHttp option is not explicitly provided.
+ *
+ * @see https://github.com/pinojs/pino-http
+ */
+function buildPinoHttpOptionsFromEnv(): boolean | PinoHttpOptions | undefined {
+  // Check if LOG_HTTP_ENABLED is explicitly set
+  const logHttpEnabled = process.env.LOG_HTTP_ENABLED;
+  if (logHttpEnabled === undefined) {
+    return undefined; // Use default behavior (not set)
+  }
+
+  // If LOG_HTTP_ENABLED is explicitly false, disable logging
+  if (logHttpEnabled === 'false' || logHttpEnabled === '0') {
+    return false;
+  }
+
+  // If LOG_HTTP_ENABLED is true, build options
+  if (logHttpEnabled === 'true' || logHttpEnabled === '1') {
+    const options: PinoHttpOptions = {};
+
+    // Check PINO_HTTP_AUTO_LOGGING env var
+    const autoLogging = process.env.PINO_HTTP_AUTO_LOGGING;
+    if (autoLogging !== undefined) {
+      options.autoLogging =
+        autoLogging !== 'false' && autoLogging !== '0';
+    }
+
+    // Return true if no custom options, otherwise return the options object
+    return Object.keys(options).length === 0 ? true : options;
+  }
+
+  // Invalid value, return undefined
+  return undefined;
+}
+
 // #region web-api-setup
 export type WebApiSetup = (router: Router) => void;
 // #endregion web-api-setup
@@ -36,18 +73,36 @@ export type ApplicationOptions = {
    * Optional Pino HTTP logger configuration.
    * When true, enables pino-http with defaults.
    * When an object, forwards the options to pino-http.
+   * When undefined/false, can be controlled via LOG_HTTP_ENABLED environment variable.
    * Requires the 'pino-http' package to be installed.
+   *
+   * Options passed here take precedence over environment variables.
+   *
+   * Environment variables:
+   * - LOG_HTTP_ENABLED: Set to 'true' to enable HTTP logging (default: undefined)
+   * - PINO_HTTP_AUTO_LOGGING: Set to 'false' to disable automatic request/response logging (default: 'true')
    *
    * @see https://github.com/pinojs/pino-http
    * @example
    * ```typescript
+   * // Option 1: Enable via code
    * const app = await getApplication({
    *   pinoHttp: true,
    * });
    *
+   * // Option 2: Enable via environment variable
+   * // export LOG_HTTP_ENABLED=true
+   * const app = await getApplication({});
+   *
+   * // Option 3: Custom configuration via code
    * const app = await getApplication({
    *   pinoHttp: { autoLogging: false },
    * });
+   *
+   * // Option 4: Customize via environment variables
+   * // export LOG_HTTP_ENABLED=true
+   * // export PINO_HTTP_AUTO_LOGGING=false
+   * const app = await getApplication({});
    * ```
    */
   pinoHttp?: boolean | PinoHttpOptions;
@@ -106,12 +161,15 @@ export const getApplication = async (options: ApplicationOptions) => {
     disableJsonMiddleware,
     disableUrlEncodingMiddleware,
     disableProblemDetailsMiddleware,
-    pinoHttp,
+    pinoHttp: pinoHttpOption,
     openApiValidator,
     observability,
   } = options;
 
   const logger = observability?.logger;
+
+  // Resolve pinoHttp: explicit option takes precedence over env vars
+  const pinoHttp = pinoHttpOption !== undefined ? pinoHttpOption : buildPinoHttpOptionsFromEnv();
 
   safeLog.debug(logger, 'Initializing Express application', {
     hasApis: !!apis?.length,
@@ -136,10 +194,10 @@ export const getApplication = async (options: ApplicationOptions) => {
         throw new Error('Invalid pino-http module: missing default export');
       }
 
-      const options = pinoHttp === true ? undefined : pinoHttp;
+      const opts = pinoHttp === true ? undefined : pinoHttp;
       const middleware = (
         provider as (opts?: PinoHttpOptions) => RequestHandler
-      )(options);
+      )(opts);
       app.use(middleware);
     } catch (error) {
       safeLog.warn(

@@ -120,6 +120,8 @@ Install the optional peer to enable HTTP request/response logging:
 npm install pino-http
 ```
 
+#### Via Code
+
 ```typescript
 const app = await getApplication({
   pinoHttp: true, // defaults
@@ -127,6 +129,30 @@ const app = await getApplication({
   pinoHttp: { autoLogging: false },
 });
 ```
+
+#### Via Environment Variables
+
+Set `LOG_HTTP_ENABLED` environment variable to enable HTTP logging:
+
+```bash
+export LOG_HTTP_ENABLED=true
+```
+
+Optional environment variables:
+- `PINO_HTTP_AUTO_LOGGING`: Set to `false` to disable automatic request/response logging (default: `true`)
+
+```bash
+export LOG_HTTP_ENABLED=true
+export PINO_HTTP_AUTO_LOGGING=false
+```
+
+Then in your code:
+
+```typescript
+const app = await getApplication({});
+```
+
+**Note:** Options passed via code take precedence over environment variables.
 
 See the full options in the [`pino-http` docs](https://github.com/pinojs/pino-http).
 
