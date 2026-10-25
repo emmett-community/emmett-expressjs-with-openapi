@@ -43,6 +43,15 @@ export const defaultErrorToProblemDetailsMapping = (
     statusCode = maybeStatus;
   }
 
+  const maybeStatusCode = errObj['statusCode'];
+  if (
+    typeof maybeStatusCode === 'number' &&
+    maybeStatusCode >= 100 &&
+    maybeStatusCode < 600
+  ) {
+    statusCode = maybeStatusCode;
+  }
+
   const maybeErrorCode = errObj['errorCode'];
   if (
     typeof maybeErrorCode === 'number' &&
@@ -52,8 +61,22 @@ export const defaultErrorToProblemDetailsMapping = (
     statusCode = maybeErrorCode;
   }
 
+  // The message of the event store conflict names the stream and its versions
+  if (error.name === VERSION_CONFLICT_ERROR_NAME) {
+    return new ProblemDocument(
+      { detail: VERSION_CONFLICT_DETAIL, status: statusCode },
+      { code: VERSION_CONFLICT_CODE },
+    );
+  }
+
   return new ProblemDocument({
     detail: error.message,
     status: statusCode,
   });
 };
+
+// Matched by name so this library does not depend on the event store packages
+const VERSION_CONFLICT_ERROR_NAME = 'ExpectedVersionConflictError';
+const VERSION_CONFLICT_CODE = 'VERSION_CONFLICT';
+const VERSION_CONFLICT_DETAIL =
+  'The resource was changed by another request. Reload it and try again.';

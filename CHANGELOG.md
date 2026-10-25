@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - Unreleased
+
+### Added
+
+- `getETagFromIfNoneMatch` and `HeaderNames.IF_NONE_MATCH`: read the standard `If-None-Match` header. The old `if-not-match` header is still accepted as a fallback.
+- The default error mapping reads `statusCode` as well as `status` and `errorCode`.
+- An `ExpectedVersionConflictError` from the event store answers Problem Details with status 412, `code` `VERSION_CONFLICT` and a detail that does not name the stream or its versions. Other errors are unchanged.
+
+### Changed
+
+- `getETagFromIfNotMatch` is deprecated in favor of `getETagFromIfNoneMatch`, and throws `MISSING_IF_NOT_MATCH_HEADER` when the header is missing, instead of `MISSING_IF_MATCH_HEADER`.
+
 ## [0.8.0] - 2026-01-15
 
 ### Added

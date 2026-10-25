@@ -186,6 +186,20 @@ const app = await getApplication({
 
 `@my-f-startup/firebase-auth-express` relies on `firebase-admin`. Make sure the Admin SDK is installed, initialized, and configured for your environment (credentials or emulator).
 
+## Error responses
+
+Errors are answered as Problem Details (`application/problem+json`). The default mapping takes the HTTP status from `status`, `statusCode` or `errorCode` of the error (100 to 599, otherwise 500) and the `detail` from its message. Pass `mapError` to customize it.
+
+An `ExpectedVersionConflictError` from the event store is answered with status 412, `code` `VERSION_CONFLICT` and a generic detail, so the stream name and versions are not exposed:
+
+```json
+{
+  "status": 412,
+  "detail": "The resource was changed by another request. Reload it and try again.",
+  "code": "VERSION_CONFLICT"
+}
+```
+
 ## Observability
 
 This package supports optional logging and tracing.
@@ -288,7 +302,8 @@ This package never initializes OpenTelemetry - configure your tracer provider in
 
 ### ETag helpers
 
-- `toWeakETag`, `getETagFromIfMatch`, `getETagFromIfNotMatch`, `getETagValueFromIfMatch`, `setETag`.
+- `toWeakETag`, `getETagFromIfMatch`, `getETagFromIfNoneMatch`, `getETagValueFromIfMatch`, `setETag`.
+- `getETagFromIfNotMatch` is deprecated, use `getETagFromIfNoneMatch`.
 
 ### Testing helpers
 
