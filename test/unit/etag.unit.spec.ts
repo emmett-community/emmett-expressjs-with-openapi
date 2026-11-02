@@ -6,6 +6,7 @@ import {
   getWeakETagValue,
   toWeakETag,
   getETagFromIfMatch,
+  getETagFromIfNoneMatch,
   getETagFromIfNotMatch,
   getETagValueFromIfMatch,
   ETagErrors,
@@ -119,6 +120,70 @@ void describe('ETag Utils - Unit Tests', () => {
     });
   });
 
+  void describe('getETagFromIfNoneMatch', () => {
+    void it('should extract ETag from If-None-Match header (string)', () => {
+      const request = {
+        headers: {
+          'if-none-match': 'W/"42"',
+        },
+      } as Request;
+
+      const etag = getETagFromIfNoneMatch(request);
+      assert.strictEqual(etag, 'W/"42"');
+    });
+
+    void it('should extract first element when If-None-Match is array', () => {
+      const request = {
+        headers: {
+          'if-none-match': ['W/"42"', 'W/"43"'],
+        },
+      } as unknown as Request;
+
+      const etag = getETagFromIfNoneMatch(request);
+      assert.strictEqual(etag, 'W/"42"');
+    });
+
+    void it('should still accept the old If-Not-Match header', () => {
+      const request = {
+        headers: {
+          'if-not-match': 'W/"42"',
+        },
+      } as Request;
+
+      const etag = getETagFromIfNoneMatch(request);
+      assert.strictEqual(etag, 'W/"42"');
+    });
+
+    void it('should prefer If-None-Match over If-Not-Match', () => {
+      const request = {
+        headers: {
+          'if-none-match': 'W/"1"',
+          'if-not-match': 'W/"2"',
+        },
+      } as Request;
+
+      const etag = getETagFromIfNoneMatch(request);
+      assert.strictEqual(etag, 'W/"1"');
+    });
+
+    void it('should throw error when If-None-Match header is missing', () => {
+      const request = {
+        headers: {},
+      } as Request;
+
+      assert.throws(
+        () => getETagFromIfNoneMatch(request),
+        (error: Error) => {
+          assert.strictEqual(
+            error.message,
+            ETagErrors.MISSING_IF_NOT_MATCH_HEADER,
+          );
+          return true;
+        },
+      );
+    });
+  });
+
   void describe('getETagFromIfNotMatch', () => {
     void it('should extract ETag from If-Not-Match header (string)', () => {
       const request = {
@@ -150,9 +215,10 @@ void describe('ETag Utils - Unit Tests', () => {
       assert.throws(
         () => getETagFromIfNotMatch(request),
         (error: Error) => {
-          // Note: This is a bug in the original code - it says MISSING_IF_MATCH_HEADER
-          // instead of MISSING_IF_NOT_MATCH_HEADER
-          assert.strictEqual(error.message, ETagErrors.MISSING_IF_MATCH_HEADER);
+          assert.strictEqual(
+            error.message,
+            ETagErrors.MISSING_IF_NOT_MATCH_HEADER,
+          );
           return true;
         },
       );

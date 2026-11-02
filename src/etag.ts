@@ -7,6 +7,8 @@ import type { Request, Response } from 'express';
 
 export const HeaderNames = {
   IF_MATCH: 'if-match',
+  IF_NONE_MATCH: 'if-none-match',
+  /** @deprecated Not an HTTP header. Use `IF_NONE_MATCH`. */
   IF_NOT_MATCH: 'if-not-match',
   ETag: 'etag',
 };
@@ -48,15 +50,20 @@ export const getETagFromIfMatch = (request: Request): ETag => {
   return etag as ETag;
 };
 
-export const getETagFromIfNotMatch = (request: Request): ETag => {
-  const etag = request.headers[HeaderNames.IF_NOT_MATCH];
+export const getETagFromIfNoneMatch = (request: Request): ETag => {
+  const etag =
+    request.headers[HeaderNames.IF_NONE_MATCH] ??
+    request.headers[HeaderNames.IF_NOT_MATCH];
 
   if (etag === undefined) {
-    throw new Error(ETagErrors.MISSING_IF_MATCH_HEADER);
+    throw new Error(ETagErrors.MISSING_IF_NOT_MATCH_HEADER);
   }
 
   return (Array.isArray(etag) ? etag[0] : etag) as ETag;
 };
+
+/** @deprecated Use `getETagFromIfNoneMatch`. */
+export const getETagFromIfNotMatch = getETagFromIfNoneMatch;
 
 export const setETag = (response: Response, etag: ETag): void => {
   response.setHeader(HeaderNames.ETag, etag as string);

@@ -91,6 +91,59 @@ void describe('Problem Details Middleware - Unit Tests', () => {
       assert.strictEqual(problem.status, 500);
     });
 
+    void it('should use statusCode field when status is missing', () => {
+      const error = Object.assign(new Error('Precondition'), {
+        statusCode: 412,
+      });
+      const problem = defaultErrorToProblemDetailsMapping(error);
+
+      assert.strictEqual(problem.status, 412);
+      assert.strictEqual(problem.detail, 'Precondition');
+    });
+
+    void it('should ignore statusCode outside 100-599', () => {
+      const error = Object.assign(new Error('Test error'), {
+        statusCode: 600,
+      });
+      const problem = defaultErrorToProblemDetailsMapping(error);
+
+      assert.strictEqual(problem.status, 500);
+    });
+
+    void it('should map a version conflict to 412 with a code and a neutral detail', () => {
+      class ExpectedVersionConflictError extends Error {
+        public readonly statusCode = 412;
+        public readonly errorCode = 412;
+
+        constructor() {
+          super(
+            "Expected version conflict for stream 'user-1': expected 0, actual 1",
+          );
+          this.name = 'ExpectedVersionConflictError';
+        }
+      }
+      const problem = defaultErrorToProblemDetailsMapping(
+        new ExpectedVersionConflictError(),
+      );
+
+      assert.strictEqual(problem.status, 412);
+      assert.strictEqual(
+        (problem as unknown as Record<string, unknown>)['code'],
+        'VERSION_CONFLICT',
+      );
+      assert.ok(!problem.detail?.includes('user-1'));
+    });
+
+    void it('should not add a code to other errors', () => {
+      const error = Object.assign(new Error('Not found'), { status: 404 });
+      const problem = defaultErrorToProblemDetailsMapping(error);
+
+      assert.strictEqual(
+        (problem as unknown as Record<string, unknown>)['code'],
+        undefined,
+      );
+    });
+
     void it('should preserve error message in detail field', () => {
       const error = new Error('Custom error message');
       const problem = defaultErrorToProblemDetailsMapping(error);
