@@ -10,14 +10,13 @@ Express.js utilities for Emmett applications that want OpenAPI 3.x validation wi
 - ✅ **Operation handlers** - Auto-wire handlers from `operationId` or `x-eov-operation-handler`.
 - ✅ **Problem Details middleware** - RFC 7807 error responses out of the box.
 - ✅ **ETag helpers** - Built-in optimistic concurrency utilities.
-- ✅ **Testing helpers** - `ApiSpecification` and `ApiE2ESpecification` for tests.
 - ✅ **Optional add-ons** - Firebase Auth security handlers and Pino HTTP logging.
 
 ## Why this package?
 
 - Built as a standalone module extracted from the original `@event-driven-io/emmett` repo so it can evolve independently.
 - Keeps the OpenAPI document as the single source of truth across manual routers, validation, and `operationHandlers`.
-- Ships with batteries included: problem-details error handling, helpers for tests, and examples for real-world setups.
+- Ships with batteries included: problem-details error handling and examples for real-world setups. The test helpers (`ApiSpecification`, `ApiE2ESpecification`) come from `@event-driven-io/emmett-expressjs`, installed in `devDependencies`, so test tooling stays out of the runtime.
 
 ## Installation
 
@@ -26,6 +25,7 @@ npm install @emmett-community/emmett-expressjs-with-openapi
 npm install express-openapi-validator            # optional: OpenAPI validation
 npm install pino-http                            # optional: HTTP logging
 npm install @my-f-startup/firebase-auth-express  # optional: Firebase Auth handlers
+npm install -D @event-driven-io/emmett-expressjs  # optional: Emmett test helpers (development only)
 ```
 
 ### Peer Dependencies
@@ -40,14 +40,12 @@ Required:
 TypeScript types:
 
 - `@types/express` ^4.17.21
-- `@types/supertest` ^6.0.2 (if using testing helpers)
 
 Optional (feature-gated):
 
 - `express-openapi-validator` ^5.3.7 (OpenAPI validation)
 - `pino-http` ^9.0.0 (HTTP logging)
 - `@my-f-startup/firebase-auth-express` 0.1.0 (Firebase Auth handlers)
-- `supertest` ^7.0.0 (required by testing helpers)
 
 Versions follow what is listed in `package.json`.
 
@@ -307,8 +305,19 @@ This package never initializes OpenTelemetry - configure your tracer provider in
 
 ### Testing helpers
 
-- `ApiSpecification`, `ApiE2ESpecification`
-- `expect`, `expectNewEvents`, `expectResponse`, `expectError`
+`ApiSpecification`, `ApiE2ESpecification`, `existingStream`, `expectNewEvents`, `expectResponse` and `expectError` come from `@event-driven-io/emmett-expressjs` (install it in `devDependencies`, with the same version as `@event-driven-io/emmett`). This package exported its own copy until 0.8.0.
+
+`getApplication` is asynchronous, and the Emmett helpers expect the application right away. Wrap it with `lazyApplication`:
+
+```typescript
+import { ApiSpecification, expectResponse } from '@event-driven-io/emmett-expressjs';
+import { getApplication, lazyApplication } from '@emmett-community/emmett-expressjs-with-openapi';
+
+const given = ApiSpecification.for(
+  () => getInMemoryEventStore(),
+  (eventStore) => lazyApplication(getApplication({ apis: [shoppingCartApi(eventStore)] })),
+);
+```
 
 See [`docs/openapi-validation.md`](docs/openapi-validation.md) for the full matrix of options and extended examples.
 

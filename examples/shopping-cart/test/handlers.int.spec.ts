@@ -3,15 +3,18 @@ import {
   getInMemoryMessageBus,
 } from '@event-driven-io/emmett';
 import {
-  ApiSpecification,
   createOpenApiValidatorOptions,
+  getApplication,
+  lazyApplication,
+  type ImportedHandlerModules,
+} from '@emmett-community/emmett-expressjs-with-openapi';
+import {
+  ApiSpecification,
   existingStream,
   expectError,
   expectNewEvents,
   expectResponse,
-  getApplication,
-  type ImportedHandlerModules,
-} from '@emmett-community/emmett-expressjs-with-openapi';
+} from '@event-driven-io/emmett-expressjs';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { beforeEach, describe, it } from 'node:test';
@@ -234,7 +237,7 @@ void describe('ShoppingCart integration (OpenAPI)', () => {
   const given = ApiSpecification.for<ShoppingCartEvent>(
     () => getInMemoryEventStore(),
     (eventStore) => {
-      return getApplication({
+      return lazyApplication(getApplication({
         openApiValidator: createOpenApiValidatorOptions(
           path.join(__dirname, '../openapi.yml'),
           {
@@ -248,7 +251,7 @@ void describe('ShoppingCart integration (OpenAPI)', () => {
             },
           },
         ),
-      });
+      }));
     },
   );
 

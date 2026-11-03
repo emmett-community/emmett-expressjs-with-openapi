@@ -3,14 +3,17 @@ import { randomUUID } from 'node:crypto';
 import { beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
-  ApiSpecification,
   createOpenApiValidatorOptions,
+  getApplication,
+  lazyApplication,
+} from '../../src';
+import {
+  ApiSpecification,
   existingStream,
   expectError,
   expectNewEvents,
   expectResponse,
-  getApplication,
-} from '../../src';
+} from '@event-driven-io/emmett-expressjs';
 import { shoppingCartApi } from '../fixtures/shopping-cart/api/routerWithOpenApi';
 import { ShoppingCartErrors } from '../fixtures/shopping-cart/businessLogic';
 import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
@@ -23,13 +26,13 @@ void describe('OpenAPI Validation - Integration Tests', () => {
   const given = ApiSpecification.for<ShoppingCartEvent>(
     () => getInMemoryEventStore(),
     (eventStore) =>
-      getApplication({
+      lazyApplication(getApplication({
         apis: [shoppingCartApi(eventStore)],
         openApiValidator: createOpenApiValidatorOptions(openApiSpecPath, {
           validateRequests: true,
           validateResponses: false,
         }),
-      }),
+      })),
   );
 
   let clientId: string;

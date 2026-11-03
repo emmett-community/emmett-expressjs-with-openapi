@@ -3,11 +3,14 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
-  ApiSpecification,
   createOpenApiValidatorOptions,
-  expectResponse,
   getApplication,
+  lazyApplication,
 } from '../../src';
+import {
+  ApiSpecification,
+  expectResponse,
+} from '@event-driven-io/emmett-expressjs';
 import { createFirebaseAuthSecurityHandlers } from '../../src/openapi/firebase-auth';
 import { firebaseAuthOpenApiSpec } from '../fixtures/firebase-auth/openapi';
 
@@ -39,7 +42,7 @@ void describeIf('Firebase Auth - Integration Tests', () => {
   const given = ApiSpecification.for(
     () => getInMemoryEventStore(),
     () =>
-      getApplication({
+      lazyApplication(getApplication({
         apis: [],
         openApiValidator: createOpenApiValidatorOptions(firebaseAuthOpenApiSpec, {
           operationHandlers: path.join(
@@ -50,7 +53,7 @@ void describeIf('Firebase Auth - Integration Tests', () => {
             handlers: createFirebaseAuthSecurityHandlers({ authClient }),
           },
         }),
-      }),
+      })),
   );
 
   void it('Should allow access with valid token', () => {

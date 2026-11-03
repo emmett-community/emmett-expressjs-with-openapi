@@ -2,11 +2,14 @@ import { getInMemoryEventStore } from '@event-driven-io/emmett';
 import { randomUUID } from 'node:crypto';
 import { before, beforeEach, describe, it } from 'node:test';
 import {
+  getApplication,
+  lazyApplication,
+} from '../../src';
+import {
   ApiE2ESpecification,
   expectResponse,
-  getApplication,
   type TestRequest,
-} from '../../src';
+} from '@event-driven-io/emmett-expressjs';
 import { shoppingCartApi } from '../fixtures/shopping-cart/api/router';
 
 void describe('Optimistic Concurrency - E2E Tests', () => {
@@ -19,7 +22,7 @@ void describe('Optimistic Concurrency - E2E Tests', () => {
 
     given = ApiE2ESpecification.for(
       () => eventStore,
-      () => getApplication({ apis: [shoppingCartApi(eventStore)] }),
+      () => lazyApplication(getApplication({ apis: [shoppingCartApi(eventStore)] })),
     );
   });
 

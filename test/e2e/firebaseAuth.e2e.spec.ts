@@ -3,11 +3,14 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
-  ApiE2ESpecification,
   createOpenApiValidatorOptions,
-  expectResponse,
   getApplication,
+  lazyApplication,
 } from '../../src';
+import {
+  ApiE2ESpecification,
+  expectResponse,
+} from '@event-driven-io/emmett-expressjs';
 import { createFirebaseAuthSecurityHandlers } from '../../src/openapi/firebase-auth';
 import { firebaseAuthOpenApiSpec } from '../fixtures/firebase-auth/openapi';
 
@@ -37,7 +40,7 @@ void describeIf('Firebase Auth - E2E Tests', () => {
   };
 
   const given = ApiE2ESpecification.for(() => getInMemoryEventStore(), () =>
-    getApplication({
+    lazyApplication(getApplication({
       apis: [],
       openApiValidator: createOpenApiValidatorOptions(firebaseAuthOpenApiSpec, {
         operationHandlers: path.join(__dirname, '../fixtures/firebase-auth'),
@@ -45,7 +48,7 @@ void describeIf('Firebase Auth - E2E Tests', () => {
           handlers: createFirebaseAuthSecurityHandlers({ authClient }),
         },
       }),
-    }),
+    })),
   );
 
   void it('Should allow authenticated profile access', () => {
