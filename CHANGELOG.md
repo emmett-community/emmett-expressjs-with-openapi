@@ -12,10 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `getETagFromIfNoneMatch` and `HeaderNames.IF_NONE_MATCH`: read the standard `If-None-Match` header. The old `if-not-match` header is still accepted as a fallback.
 - The default error mapping reads `statusCode` as well as `status` and `errorCode`.
 - An `ExpectedVersionConflictError` from the event store answers Problem Details with status 412, `code` `VERSION_CONFLICT` and a detail that does not name the stream or its versions. Other errors are unchanged.
+- `lazyApplication(building)`: wraps an application that is built asynchronously (such as the result of `getApplication`) into a request handler that supertest accepts, so it can be used with the synchronous test helpers of `@event-driven-io/emmett-expressjs`. A build failure goes to the request through `next`, or answers 500 when there is no `next`.
 
 ### Changed
 
 - `getETagFromIfNotMatch` is deprecated in favor of `getETagFromIfNoneMatch`, and throws `MISSING_IF_NOT_MATCH_HEADER` when the header is missing, instead of `MISSING_IF_MATCH_HEADER`.
+- `supertest` is no longer a dependency of this package, so it does not go to production.
+
+### Removed
+
+- **Breaking:** the test helpers `ApiSpecification`, `ApiE2ESpecification`, `existingStream`, `expect`, `expectNewEvents`, `expectResponse`, `expectError` and the types `TestRequest`, `ResponseAssert`, `ApiSpecificationAssert`, `E2EResponseAssert` and `ApiE2ESpecificationAssert` are no longer exported. Import them from `@event-driven-io/emmett-expressjs` (same version as `@event-driven-io/emmett`), installed in `devDependencies`, and wrap the application with `lazyApplication` (see Added).
 
 ## [0.8.0] - 2026-01-15
 

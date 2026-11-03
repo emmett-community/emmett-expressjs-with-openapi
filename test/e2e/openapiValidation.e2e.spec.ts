@@ -3,12 +3,15 @@ import { randomUUID } from 'node:crypto';
 import { before, beforeEach, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
-  ApiE2ESpecification,
   createOpenApiValidatorOptions,
-  expectResponse,
   getApplication,
-  type TestRequest,
+  lazyApplication,
 } from '../../src';
+import {
+  ApiE2ESpecification,
+  expectResponse,
+  type TestRequest,
+} from '@event-driven-io/emmett-expressjs';
 import { shoppingCartApi } from '../fixtures/shopping-cart/api/routerWithOpenApi';
 
 const openApiSpecPath = fileURLToPath(
@@ -26,13 +29,13 @@ void describe('OpenAPI Validation - E2E Tests', () => {
     given = ApiE2ESpecification.for(
       () => eventStore,
       () =>
-        getApplication({
+        lazyApplication(getApplication({
           apis: [shoppingCartApi(eventStore)],
           openApiValidator: createOpenApiValidatorOptions(openApiSpecPath, {
             validateRequests: true,
             validateResponses: false,
           }),
-        }),
+        })),
     );
   });
 

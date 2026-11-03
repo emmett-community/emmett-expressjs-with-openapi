@@ -2,13 +2,16 @@ import { getInMemoryEventStore } from '@event-driven-io/emmett';
 import { randomUUID } from 'node:crypto';
 import { beforeEach, describe, it } from 'node:test';
 import {
+  getApplication,
+  lazyApplication,
+} from '../../src';
+import {
   ApiSpecification,
   existingStream,
   expectError,
   expectNewEvents,
   expectResponse,
-  getApplication,
-} from '../../src';
+} from '@event-driven-io/emmett-expressjs';
 import { shoppingCartApi } from '../fixtures/shopping-cart/api/router';
 import { ShoppingCartErrors } from '../fixtures/shopping-cart/businessLogic';
 import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
@@ -16,7 +19,7 @@ import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
 void describe('Basic Router - Integration Tests', () => {
   const given = ApiSpecification.for<ShoppingCartEvent>(
     () => getInMemoryEventStore(),
-    (eventStore) => getApplication({ apis: [shoppingCartApi(eventStore)] }),
+    (eventStore) => lazyApplication(getApplication({ apis: [shoppingCartApi(eventStore)] })),
   );
 
   let clientId: string;

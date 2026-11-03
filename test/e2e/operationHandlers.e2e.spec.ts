@@ -5,12 +5,15 @@ import { before, beforeEach, describe, it } from 'node:test';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import {
-  ApiE2ESpecification,
   createOpenApiValidatorOptions,
-  expectResponse,
   getApplication,
-  type TestRequest,
+  lazyApplication,
 } from '../../src';
+import {
+  ApiE2ESpecification,
+  expectResponse,
+  type TestRequest,
+} from '@event-driven-io/emmett-expressjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +34,7 @@ void describe('Operation Handlers - E2E Tests', () => {
     given = ApiE2ESpecification.for(
       () => eventStore,
       () =>
-        getApplication({
+        lazyApplication(getApplication({
           apis: [],
           openApiValidator: createOpenApiValidatorOptions(
             path.join(__dirname, '../fixtures/shopping-cart/api/openapi.yml'),
@@ -41,7 +44,7 @@ void describe('Operation Handlers - E2E Tests', () => {
               operationHandlers: path.join(__dirname, '../fixtures/shopping-cart/api'),
             },
           ),
-        }),
+        })),
     );
   });
 

@@ -5,14 +5,17 @@ import { beforeEach, describe, it } from 'node:test';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import {
-  ApiSpecification,
   createOpenApiValidatorOptions,
+  getApplication,
+  lazyApplication,
+} from '../../src';
+import {
+  ApiSpecification,
   existingStream,
   expectError,
   expectNewEvents,
   expectResponse,
-  getApplication,
-} from '../../src';
+} from '@event-driven-io/emmett-expressjs';
 import { ShoppingCartErrors } from '../fixtures/shopping-cart/businessLogic';
 import type { ShoppingCartEvent } from '../fixtures/shopping-cart/shoppingCart';
 const require = createRequire(import.meta.url);
@@ -29,7 +32,7 @@ void describe('Operation Handlers - Integration Tests', () => {
       // Inject event store into operation handlers BEFORE creating the app
       setEventStore(eventStore);
 
-      return getApplication({
+      return lazyApplication(getApplication({
         apis: [],
         openApiValidator: createOpenApiValidatorOptions(
           path.join(__dirname, '../fixtures/shopping-cart/api/openapi.yml'),
@@ -39,7 +42,7 @@ void describe('Operation Handlers - Integration Tests', () => {
             operationHandlers: path.join(__dirname, '../fixtures/shopping-cart/api'),
           },
         ),
-      });
+      }));
     },
   );
 

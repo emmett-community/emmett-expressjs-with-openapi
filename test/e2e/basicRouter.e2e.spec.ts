@@ -5,8 +5,8 @@ import {
   ApiE2ESpecification,
   expectResponse,
   type TestRequest,
-} from '../../src';
-import { getApplication } from '../../src';
+} from '@event-driven-io/emmett-expressjs';
+import { getApplication, lazyApplication } from '../../src';
 import { shoppingCartApi } from '../fixtures/shopping-cart/api/router';
 
 void describe('Basic Router - E2E Tests', () => {
@@ -19,7 +19,7 @@ void describe('Basic Router - E2E Tests', () => {
 
     given = ApiE2ESpecification.for(
       () => eventStore,
-      () => getApplication({ apis: [shoppingCartApi(eventStore)] }),
+      () => lazyApplication(getApplication({ apis: [shoppingCartApi(eventStore)] })),
     );
   });
 
