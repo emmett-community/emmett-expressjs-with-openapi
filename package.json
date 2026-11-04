@@ -22,7 +22,8 @@
     "url": "git+https://github.com/emmett-community/emmett-expressjs-with-openapi.git"
   },
   "keywords": [
-    "Event Sourcing"
+    "Event Sourcing",
+    "Emmett"
   ],
   "author": "Andre X Costa",
   "bugs": {
